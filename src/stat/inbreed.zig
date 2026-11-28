@@ -2,10 +2,10 @@
 //! options DATA=, COVAR, MATRIX, IND, INIT=, NOPRINT; the VAR and BY roles,
 //! the default (unaddressed) VAR variables, the documented missing-value
 //! rules (pp.5278-5279) and the overlapping-population coancestry recursion
-//! (pp.5280-5285) with the MATRIX / IND listings and "Number of Individuals".
-//! Everything the cited pages define but this file does not compute is a
-//! loud D-009 gap: CLASS (nonoverlapping generations), GENDER, MATINGS,
-//! AVERAGE, INDL, MATRIXL, SELFDIAG and OUTCOV=.
+//! (pp.5280-5285), the CLASS nonoverlapping-generation recursion, the
+//! MATRIX / IND listings and "Number of Individuals". Everything the cited
+//! pages define but this file does not compute is a loud D-009 gap: GENDER,
+//! MATINGS, AVERAGE, INDL, MATRIXL, SELFDIAG and OUTCOV=.
 //!
 //! Coancestry f (overlapping mode, individuals in population order; for X
 //! older than Y with parents C, D): f_XY = (f_XC + f_XD)/2, f_XX =
@@ -41,6 +41,8 @@ pub const Spec = struct {
     p1_col: usize = 0,
     p2_col: usize = 0,
     cov_col: ?usize = null,
+    /// CLASS generation variable (nonoverlapping mode), p.5277.
+    class_col: ?usize = null,
     var_given: bool = false,
     by_cols: []const usize = &.{},
     by_desc: []const bool = &.{},
@@ -161,7 +163,13 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             // p.5278: three or four variables.
             if (vars.items.len < 3 or vars.items.len > 4) return cx.diags.fail(error.ParseError, t[i].line, "PROC INBREED: the VAR statement requires three or four variables (individual parent1 parent2 <covariance>), found {d}", .{vars.items.len});
         } else if (eq(word, "class")) {
-            return gap(cx.diags, t[i].line, "PROC INBREED: the CLASS statement (nonoverlapping generations) is not implemented", .{});
+            if (s.class_col != null) return gap(cx.diags, t[i].line, "PROC INBREED: more than one CLASS statement is not verified", .{});
+            // p.5277: CLASS variable; one generation variable.
+            if (end != i + 2 or !at(t, i + 1, .name)) return cx.diags.fail(error.ParseError, t[i].line, "PROC INBREED: the CLASS statement names exactly one generation variable", .{});
+            const ci = ds.indexOf(t[i + 1].text) orelse return cx.diags.fail(error.ParseError, t[i].line, "PROC INBREED: CLASS variable {s} not found", .{t[i + 1].text});
+            // p.5277: generation numbers must be integers.
+            if (ds.columns.items[ci].type != .num) return cx.diags.fail(error.ParseError, t[i].line, "PROC INBREED: the CLASS variable {s} must be numeric (integer generation numbers)", .{t[i + 1].text});
+            s.class_col = ci;
         } else if (eq(word, "gender")) {
             return gap(cx.diags, t[i].line, "PROC INBREED: the GENDER statement is not implemented (STAT-INBREED-003)", .{});
         } else if (eq(word, "matings")) {
@@ -182,6 +190,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         try addressed.append(a, c.*);
     }
     s.by_cols = bcols;
+    if (s.class_col) |c| try addressed.append(a, c);
     s.by_desc = pb.desc;
     s.notsorted = pb.notsorted;
     if (!s.var_given) {
@@ -196,8 +205,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (vars.items.len == 4 and ds.columns.items[vars.items[3]].type != .num)
             return gap(cx.diags, line(t, 0), "PROC INBREED: without a VAR statement, a character fourth variable {s} (covariance must be numeric) is not verified", .{ds.columns.items[vars.items[3]].name});
     } else {
-        for (vars.items) |ci| if (std.mem.indexOfScalar(usize, bcols, ci) != null)
-            return gap(cx.diags, line(t, 0), "PROC INBREED: a BY variable that is also a VAR variable is not verified", .{});
+        for (vars.items) |ci| if (std.mem.indexOfScalar(usize, addressed.items, ci) != null)
+            return gap(cx.diags, line(t, 0), "PROC INBREED: a BY or CLASS variable that is also a VAR variable is not verified", .{});
     }
     s.ind_col = vars.items[0];
     s.p1_col = vars.items[1];
@@ -353,6 +362,173 @@ pub fn build(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, first_obs: 
     return .{ .names = names.items, .p1_text = p1t.items, .p2_text = p2t.items, .sire = sire.items, .dam = dam.items, .f = f, .inbreeding = inb };
 }
 
+fn quarter(x: [4]f64) f64 {
+    var sum: f64 = 0;
+    var known = false;
+    for (x) |v| if (!std.math.isNan(v)) {
+        sum += v;
+        known = true;
+    };
+    return if (known) sum / 4 else nan;
+}
+
+pub const Generation = struct { label: []const u8, pop: Population };
+
+/// Nonoverlapping generations (CLASS, pp.5277-5282): generations in input
+/// order; parents are individuals of the previous generation (an unknown
+/// parent is appended to it, unrelated, and not displayed); for X (A, B) and
+/// Y (C, D): f_XY = (f_AC + f_AD + f_BC + f_BD)/4, f_XX = (1 + f_AB)/2. An
+/// observation with a missing individual assigns Cov(parent1, parent2)
+/// between two current-generation individuals, applied to their whole
+/// families (full sibs); the latest assignment wins.
+pub fn buildGenerations(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, first_obs: usize) diag.Error![]Generation {
+    const a = cx.arena;
+    const gap = proc.failGap;
+    const ds = s.input.ds;
+    const gc = s.class_col.?;
+    const ind_name = ds.columns.items[s.ind_col].name;
+    const unknown: f64 = if (s.init) |v| (if (v != 0) v / 2 else nan) else nan;
+    const self_unknown = (1 + (if (std.math.isNan(unknown)) 0 else unknown)) / 2;
+    var gens: std.ArrayList(Generation) = .empty;
+    var seen_labels: std.ArrayList(f64) = .empty;
+    // Previous generation: names, coancestry (row-major, width prev_w).
+    var prev_index: std.StringHashMapUnmanaged(usize) = .empty;
+    var prev_f: []const f64 = &.{};
+    var prev_w: usize = 0;
+    var prev_extra: usize = 0; // unknown parents appended to the previous generation
+    var r: usize = 0;
+    while (r < rows.len) {
+        const gv = rows[r][gc].num;
+        if (std.math.isNan(gv)) {
+            r += 1; // p.5278: observations with missing generation are excluded
+            continue;
+        }
+        if (gv != @trunc(gv)) return cx.diags.fail(error.ParseError, 0, "PROC INBREED: generation number {d} is not an integer", .{gv});
+        for (seen_labels.items) |o| if (o == gv) return gap(cx.diags, 0, "PROC INBREED: generation {d} appears in more than one run of observations; that case is not verified", .{gv});
+        try seen_labels.append(a, gv);
+        var end = r;
+        while (end < rows.len and (std.math.isNan(rows[end][gc].num) or rows[end][gc].num == gv)) end += 1;
+
+        var names: std.ArrayList([]const u8) = .empty;
+        var p1t: std.ArrayList([]const u8) = .empty;
+        var p2t: std.ArrayList([]const u8) = .empty;
+        var par: std.ArrayList([2]?usize) = .empty;
+        var index: std.StringHashMapUnmanaged(usize) = .empty;
+        const Assign = struct { x: usize, y: usize, f: f64 };
+        var assigns: std.ArrayList(Assign) = .empty;
+        for (rows[r..end], r..) |row, rr| {
+            if (std.math.isNan(row[gc].num)) continue;
+            const obs = if (s.input.srcobs) |so| so[first_obs + rr] else first_obs + rr + 1;
+            const who = try nameKey(a, row[s.ind_col]);
+            const k1 = try nameKey(a, row[s.p1_col]);
+            const k2 = try nameKey(a, row[s.p2_col]);
+            const cov: f64 = if (s.cov_col) |c| row[c].num else nan;
+            if (who == null) {
+                // p.5280: an assignment observation between two individuals
+                // already defined in the current generation.
+                if (std.math.isNan(cov) or k1 == null or k2 == null) return gap(cx.diags, 0, "PROC INBREED: an observation with a missing individual and no complete covariance assignment (observation {d}) is not verified for nonoverlapping generations", .{obs});
+                const x = index.get(k1.?) orelse return gap(cx.diags, 0, "PROC INBREED: covariance assignment at observation {d} names {s}, which is not defined earlier in its generation; that case is not verified", .{ obs, k1.? });
+                const y = index.get(k2.?) orelse return gap(cx.diags, 0, "PROC INBREED: covariance assignment at observation {d} names {s}, which is not defined earlier in its generation; that case is not verified", .{ obs, k2.? });
+                try assigns.append(a, .{ .x = x, .y = y, .f = cov / 2 });
+                continue;
+            }
+            if (index.get(who.?) != null) {
+                try cx.diags.warn(0, "Individual {s}={s} has been previously defined.  Observation {d} corresponding to this individual will not be processed.", .{ ind_name, who.?, obs });
+                continue;
+            }
+            // p.5280: with CLASS, defining individuals and assigning
+            // covariances are separate observations; the value here would
+            // concern the previous generation, already reported (the Guide's
+            // Figure 71.2 does not use it). Not applied, and said so.
+            if (!std.math.isNan(cov)) try cx.diags.warn(0, "The covariance value at observation {d} defines no assignment for nonoverlapping generations and is ignored.", .{obs});
+            var pp: [2]?usize = .{ null, null };
+            for ([2]?[]const u8{ k1, k2 }, 0..) |pk, k| {
+                if (pk == null) continue;
+                if (prev_index.get(pk.?)) |pi| {
+                    pp[k] = pi;
+                    continue;
+                }
+                // pp.5271-5272: appended to the previous generation, unrelated.
+                const pi = prev_w + prev_extra;
+                prev_extra += 1;
+                try prev_index.put(a, pk.?, pi);
+                pp[k] = pi;
+            }
+            try index.put(a, who.?, names.items.len);
+            try names.append(a, who.?);
+            try p1t.append(a, k1 orelse "");
+            try p2t.append(a, k2 orelse "");
+            try par.append(a, pp);
+        }
+        const k = names.items.len;
+        if (k > 5000) return gap(cx.diags, 0, "PROC INBREED: generations of more than 5000 individuals ({d}) are not implemented", .{k});
+        const pf = struct {
+            fn get(f: []const f64, w: usize, unk: f64, self_unk: f64, i: ?usize, j: ?usize) f64 {
+                if (i == null or j == null) return unk;
+                if (i.? < w and j.? < w) return f[i.? * w + j.?];
+                return if (i.? == j.?) self_unk else unk;
+            }
+        }.get;
+        const f = try a.alloc(f64, k * k);
+        const inb = try a.alloc(f64, k);
+        for (0..k) |x| {
+            const ab = par.items[x];
+            const fx = pf(prev_f, prev_w, unknown, self_unknown, ab[0], ab[1]);
+            inb[x] = fx;
+            f[x * k + x] = (1 + (if (std.math.isNan(fx)) 0 else fx)) / 2;
+            for (0..x) |y| {
+                const cd = par.items[y];
+                const v = quarter(.{
+                    pf(prev_f, prev_w, unknown, self_unknown, ab[0], cd[0]),
+                    pf(prev_f, prev_w, unknown, self_unknown, ab[0], cd[1]),
+                    pf(prev_f, prev_w, unknown, self_unknown, ab[1], cd[0]),
+                    pf(prev_f, prev_w, unknown, self_unknown, ab[1], cd[1]),
+                });
+                f[x * k + y] = v;
+                f[y * k + x] = v;
+            }
+        }
+        // Family = same first parent and same second parent (Example 71.1:
+        // individuals with parents 1,2 and 2,1 are not one family).
+        const fam = struct {
+            fn same(p: []const [2]?usize, x: usize, y: usize) bool {
+                if (x == y) return true;
+                const u = p[x];
+                const w = p[y];
+                if (u[0] == null or u[1] == null or w[0] == null or w[1] == null) return false;
+                return u[0].? == w[0].? and u[1].? == w[1].?;
+            }
+        }.same;
+        for (assigns.items) |as| {
+            if (fam(par.items, as.x, as.y)) return gap(cx.diags, 0, "PROC INBREED: a covariance assignment within one family is not verified", .{});
+            for (0..k) |x| {
+                if (!fam(par.items, x, as.x)) continue;
+                for (0..k) |y| {
+                    if (!fam(par.items, y, as.y)) continue;
+                    f[x * k + y] = as.f;
+                    f[y * k + x] = as.f;
+                }
+            }
+        }
+        const sire = try a.alloc(?usize, k);
+        const dam = try a.alloc(?usize, k);
+        for (par.items, sire, dam) |pp, *x, *y| {
+            x.* = pp[0];
+            y.* = pp[1];
+        }
+        try gens.append(a, .{
+            .label = try proc.cellText(a, .{ .num = gv }),
+            .pop = .{ .names = names.items, .p1_text = p1t.items, .p2_text = p2t.items, .sire = sire, .dam = dam, .f = f, .inbreeding = inb },
+        });
+        prev_index = index;
+        prev_f = f;
+        prev_w = k;
+        prev_extra = 0;
+        r = end;
+    }
+    return gens.items;
+}
+
 /// Fw.4 with half-away rounding; missing as "." aligned on the decimal point.
 fn cell(a: A, v: f64) ![]const u8 {
     if (std.math.isNan(v)) return ".    ";
@@ -373,9 +549,12 @@ fn right(a: A, out: *Out, text: []const u8, w: usize) !void {
     try out.appendSlice(a, text);
 }
 
-fn header(a: A, out: *Out, ds: *Dataset, s: Spec, group: ?[]const Value) !void {
+fn header(a: A, out: *Out, ds: *Dataset, s: Spec, group: ?[]const Value, gen: ?[]const u8) !void {
     if (group) |row| try by.appendLine(a, out, ds, row, s.by_cols);
     try out.appendSlice(a, "\nThe INBREED Procedure\n\n");
+    // ponytail: the generation line layout follows the User's Guide figures
+    // (Figure 71.2), not a captured listing.
+    if (gen) |g| try out.print(a, "{s} = {s}\n\n", .{ ds.columns.items[s.class_col.?].name, g });
 }
 
 /// Name-column widths: a character variable shows its first 12 characters
@@ -431,13 +610,13 @@ fn table(a: A, out: *Out, ds: *Dataset, s: Spec, p: Population, title: []const u
     }
 }
 
-fn render(a: A, out: *Out, s: Spec, p: Population, group: ?[]const Value) !void {
+fn render(a: A, out: *Out, s: Spec, p: Population, group: ?[]const Value, gen: ?[]const u8) !void {
     const ds = s.input.ds;
     const kind: []const u8 = if (s.covar) "Covariance" else "Inbreeding";
     const n = p.n();
     var any = false;
     if (s.matrix) {
-        try header(a, out, ds, s, group);
+        try header(a, out, ds, s, group, gen);
         const widths = try a.alloc(usize, n);
         for (p.names, widths) |nm, *w| w.* = @max(8, nm.len);
         const rows = try a.alloc([]const []const u8, n);
@@ -450,7 +629,7 @@ fn render(a: A, out: *Out, s: Spec, p: Population, group: ?[]const Value) !void 
         any = true;
     }
     if (s.ind) {
-        try header(a, out, ds, s, group);
+        try header(a, out, ds, s, group, gen);
         const rows = try a.alloc([]const []const u8, n);
         for (0..n) |i| {
             const r = try a.alloc([]const u8, 1);
@@ -460,7 +639,7 @@ fn render(a: A, out: *Out, s: Spec, p: Population, group: ?[]const Value) !void 
         try table(a, out, ds, s, p, try std.fmt.allocPrint(a, "{s} Coefficients of Individuals", .{kind}), &.{"Coefficient"}, &.{12}, rows);
         any = true;
     }
-    if (any) try out.appendSlice(a, "\n") else try header(a, out, ds, s, group);
+    if (any) try out.appendSlice(a, "\n") else try header(a, out, ds, s, group, gen);
     if (any) try out.appendSlice(a, "\n");
     try out.print(a, "Number of Individuals    {d}\n", .{n});
 }
@@ -476,10 +655,17 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     for (groups) |g| {
         defer first += g.rows.len;
         if (g.rows.len == 0) continue;
+        const rep = if (s.by_cols.len > 0) g.rep else null;
+        if (s.class_col != null) {
+            const gens = try buildGenerations(cx, s, g.rows, first);
+            if (s.noprint) continue;
+            for (gens) |gen| if (gen.pop.n() > 0) try render(a, out, s, gen.pop, rep, gen.label);
+            continue;
+        }
         const p = try build(cx, s, g.rows, first);
         // A group whose observations all lack the individual prints nothing.
         if (s.noprint or p.n() == 0) continue;
-        try render(a, out, s, p, if (s.by_cols.len > 0) g.rep else null);
+        try render(a, out, s, p, rep, null);
     }
 }
 

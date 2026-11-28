@@ -86,6 +86,32 @@ fn build(a: A, lib: *Library) !void {
     try put(a, lib, "chcov", &.{ "id", "p1", "p2", "c" }, &.{
         &.{ str("X"), str(""), str(""), str("a") },
     });
+    // gen: nonoverlapping generations. Gen 1: A, B (parents P, Q, R
+    // unknown, inserted into an implicit generation 0); gen 2: C, D full
+    // sibs of A x B, E = A x A; an observation with a missing generation
+    // is excluded; the assignment observation fixes Cov(C, E) = 0.5 for
+    // the whole family of C (C and D).
+    try put(a, lib, "gen", &.{ "id", "p1", "p2", "#cv", "#gen" }, &.{
+        &.{ str("A"), str("P"), str("Q"), num(nan), num(1) },
+        &.{ str("B"), str("P"), str("R"), num(nan), num(1) },
+        &.{ str("Z"), str(""), str(""), num(nan), num(nan) },
+        &.{ str("C"), str("A"), str("B"), num(nan), num(2) },
+        &.{ str("D"), str("A"), str("B"), num(nan), num(2) },
+        &.{ str("E"), str("A"), str("A"), num(nan), num(2) },
+        &.{ str(""), str("C"), str("E"), num(0.5), num(2) },
+    });
+    try put(a, lib, "genbad", &.{ "id", "p1", "p2", "#gen", "cgen" }, &.{
+        &.{ str("A"), str(""), str(""), num(1.5), str("x") },
+    });
+    try put(a, lib, "genrep", &.{ "id", "p1", "p2", "#gen" }, &.{
+        &.{ str("A"), str(""), str(""), num(1) },
+        &.{ str("B"), str("A"), str(""), num(2) },
+        &.{ str("C"), str(""), str(""), num(1) },
+    });
+    try put(a, lib, "genundef", &.{ "id", "p1", "p2", "#cv", "#gen" }, &.{
+        &.{ str("A"), str(""), str(""), num(nan), num(1) },
+        &.{ str(""), str("A"), str("B"), num(0.5), num(1) },
+    });
     try put(a, lib, "two", &.{ "id", "p1" }, &.{
         &.{ str("X"), str("") },
     });
@@ -216,7 +242,8 @@ test "STAT-INBREED-001 unimplemented valid features are loud D-009 gaps" {
     defer e.arena.deinit();
     try e.init();
     const cases = [_][]const u8{
-        "proc inbreed data=pop; class extra; run;",
+        "proc inbreed data=gen; class gen; class gen; run;",
+        "proc inbreed data=gen matrixl; class gen; run;",
         "proc inbreed data=pop; gender p1; run;",
         "proc inbreed data=pop; matings X / Y; run;",
         "proc inbreed data=pop outcov=o; run;",
@@ -334,4 +361,53 @@ test "STAT-INBREED-001 numeric names, 12-character names, empty, NOPRINT and BY 
     try expect(has(out, "Number of Individuals    2") and has(out, "Number of Individuals    4"));
     try expect(has(out, "0.6250") and has(out, "0.2500") and has(out, "0.5000"));
     try expect(has(out, "Inbreeding Coefficients of Individuals"));
+}
+
+test "STAT-INBREED-001 CLASS nonoverlapping generations" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const s = try e.parse("proc inbreed data=gen covar matrix; class gen; run;");
+    try expectEqual(@as(?usize, 4), s.class_col);
+    // CLASS is addressed: the default VAR takes id p1 p2 and cv.
+    try expectEqual(@as(?usize, 3), s.cov_col);
+    const g = try inbreed.buildGenerations(e.cx(), s, s.input.ds.rows.items, 0);
+    try expectEqual(@as(usize, 2), g.len);
+    try std.testing.expectEqualStrings("1", g[0].label);
+    const g1 = g[0].pop;
+    const g2 = g[1].pop;
+    try expectEqual(@as(usize, 2), g1.n()); // Z (missing generation) excluded
+    try expectEqual(@as(usize, 3), g2.n());
+    // Gen 1: f_AB = (f_PP + f_PR + f_QP + f_QR)/4 = (1/2)/4 = 1/8 -> Cov 0.25;
+    // F_A = f_PQ missing -> Cov(A,A) = 1.
+    try approx(@as(f64, 0.25), g1.value(true, 0, 1), 1e-12);
+    try approx(@as(f64, 1.0), g1.value(true, 0, 0), 1e-12);
+    try expect(std.math.isNan(g1.value(false, 0, 0)));
+    // Gen 2: full sibs C, D: f = (f_AA + 2 f_AB + f_BB)/4 = (1/2 + 1/4 + 1/2)/4
+    // = 5/16 -> Cov 0.625; F_C = f_AB = 1/8 -> Cov(C,C) = 1.125.
+    try approx(@as(f64, 0.625), g2.value(true, 0, 1), 1e-12);
+    try approx(@as(f64, 1.125), g2.value(true, 0, 0), 1e-12);
+    // E = A x A: F_E = f_AA = 1/2 -> Cov(E,E) = 1.5.
+    try approx(@as(f64, 1.5), g2.value(true, 2, 2), 1e-12);
+    // Assignment Cov(C, E) = 0.5 applies to C's family: Cov(D, E) = 0.5 too
+    // (computed value would be (f_AA + f_AA + f_BA + f_BA)/4 = 5/16 -> 0.625).
+    try approx(@as(f64, 0.5), g2.value(true, 0, 2), 1e-12);
+    try approx(@as(f64, 0.5), g2.value(true, 1, 2), 1e-12);
+    // Invalid CLASS input (rc 1) and unverified shapes (rc 2).
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expectError(error.ParseError, e.parse("proc inbreed data=genbad; var id p1 p2; class cgen; run;"));
+    try expect(has(e.lastError(), "must be numeric") and !diag.gapHit());
+    try std.testing.expectError(error.ParseError, e.parse("proc inbreed data=genbad; class nosuch; run;"));
+    try std.testing.expectError(error.ParseError, e.parse("proc inbreed data=genbad; class gen cgen; run;"));
+    const bad = try e.parse("proc inbreed data=genbad; var id p1 p2; class gen; run;");
+    try std.testing.expectError(error.ParseError, inbreed.buildGenerations(e.cx(), bad, bad.input.ds.rows.items, 0));
+    try expect(has(e.lastError(), "not an integer") and !diag.gapHit());
+    const rep = try e.parse("proc inbreed data=genrep; class gen; run;");
+    try std.testing.expectError(error.ParseError, inbreed.buildGenerations(e.cx(), rep, rep.input.ds.rows.items, 0));
+    try expect(diag.gapHit());
+    diag.resetGap();
+    const und = try e.parse("proc inbreed data=genundef; class gen; run;");
+    try std.testing.expectError(error.ParseError, inbreed.buildGenerations(e.cx(), und, und.input.ds.rows.items, 0));
+    try expect(diag.gapHit());
 }
