@@ -36,8 +36,17 @@ fn number(a: A, x: f64, comptime places: usize) ![]const u8 {
     if (!std.math.isFinite(x)) return ".";
     return std.fmt.allocPrint(a, "{d:." ++ std.fmt.comptimePrint("{d}", .{places}) ++ "}", .{x});
 }
+/// STAT-REG-001: the ANOVA F Value column is 7 wide in SAS 9.4 (runs: 975748,
+/// 13381.5, 1349087, 1.215E7); a value whose two-decimal form does not fit is
+/// shown in BEST7.
+fn fValue(a: A, x: f64) ![]const u8 {
+    const fixed = try number(a, x, 2);
+    if (fixed.len <= 7) return fixed;
+    return std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = x }, "best7."), " ");
+}
 fn statistic(a: A, x: f64) ![]const u8 {
     if (!std.math.isFinite(x)) return ".";
+    if (x == 0) return "0"; // STAT-REG-001: SAS 9.4 prints an exact zero as 0
     // SAS BESTD-style listing: five decimals at ordinary scales, integral
     // display for large sums, additional precision for very small estimates.
     if (@abs(x) >= 10000) return number(a, x, 0);
@@ -55,11 +64,12 @@ pub fn render(a: A, out: *std.ArrayList(u8), spec: parse.Spec, model: parse.Mode
         try out.print(a, " {s}", .{label});
     };
     if (r.restrictions.len > 0) try out.appendSlice(a, "\n\nNOTE: Restrictions have been applied to parameter estimates.");
-    try out.print(a, "\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ read, used });
+    // STAT-REG-001: SAS prints no observation counts for TYPE=CORR/COV/SSCP input.
+    if (spec.summary) try out.appendSlice(a, "\n") else try out.print(a, "\n\nNumber of Observations Read {d}\nNumber of Observations Used {d}\n", .{ read, used });
     if (spec.freq != null) try out.print(a, "Sum of Frequencies Used {d}\n", .{r.n});
     if (spec.weight) |ci| try out.print(a, "\nWeight: {s}\n", .{spec.ds.columns.items[ci].name});
     try out.appendSlice(a, "\nAnalysis of Variance\n\nSum of Mean\nSource DF Squares Square F Value Pr > F\n\n");
-    try out.print(a, "Model {s} {s} {s} {s} {s}\nError {s} {s} {s}\n{s} Total {s} {s}\n\n", .{ try number(a, r.df_model, 0), try statistic(a, r.ss_model), try statistic(a, r.ms_model), try number(a, r.f, 2), try probability(a, r.p), try number(a, r.df_error, 0), try statistic(a, r.ss_error), try statistic(a, r.ms_error), if (model.intercept) @as([]const u8, "Corrected") else "Uncorrected", try number(a, r.df_total, 0), try statistic(a, r.ss_total) });
+    try out.print(a, "Model {s} {s} {s} {s} {s}\nError {s} {s} {s}\n{s} Total {s} {s}\n\n", .{ try number(a, r.df_model, 0), try statistic(a, r.ss_model), try statistic(a, r.ms_model), try fValue(a, r.f), try probability(a, r.p), try number(a, r.df_error, 0), try statistic(a, r.ss_error), try statistic(a, r.ms_error), if (model.intercept) @as([]const u8, "Corrected") else "Uncorrected", try number(a, r.df_total, 0), try statistic(a, r.ss_total) });
     try out.print(a, "Root MSE {s} R-Square {s}\nDependent Mean {s} Adj R-Sq {s}\nCoeff Var {s}\n", .{ try statistic(a, r.root_mse), try number(a, r.r_square, 4), try statistic(a, r.mean), try number(a, r.adj_r_square, 4), try statistic(a, r.cv) });
     if (r.dependencies.len > 0) try out.print(a, "\nNOTE: Model is not full rank. Least-squares solutions for the parameters are not unique. Some statistics will be misleading. A reported DF of 0 or B means that\n      the estimate is biased.\nNOTE: The following parameters have been set to 0, since the variables are a linear combination of other variables as shown.\n\n{s}\n", .{r.dependencies});
     try out.appendSlice(a, "\nParameter Estimates\n\nParameter Standard");

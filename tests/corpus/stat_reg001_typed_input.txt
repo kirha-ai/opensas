@@ -1,0 +1,243 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 2 593.56270 296.78135 451.65 <.0001
+Error 9 5.91397 0.65711
+Corrected Total 11 599.47667
+
+Root MSE 0.81062 R-Square 0.9901
+Dependent Mean 13.28333 Adj R-Sq 0.9879
+Coeff Var 6.10255
+
+Parameter Estimates
+
+Parameter Standard Variance
+Variable DF Estimate Error t Value Pr > |t| Tolerance Inflation
+
+Intercept 1 0.08881 0.50735 0.18 0.8649 . 0
+x1 1 2.11496 0.16905 12.51 <.0001 0.16079 6.21928
+x2 1 -0.08504 0.16905 -0.50 0.6270 0.16079 6.21928
+
+The REG Procedure
+Model: MODEL1
+
+Test 1 Results for Dependent Variable y
+
+Mean
+Source DF Square F Value Pr > F
+
+Numerator 1 29.04000 44.19 <.0001
+Denominator 9 0.65711
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 2 593.56270 296.78135 451.65 <.0001
+Error 9 5.91397 0.65711
+Corrected Total 11 599.47667
+
+Root MSE 0.81062 R-Square 0.9901
+Dependent Mean 13.28333 Adj R-Sq 0.9879
+Coeff Var 6.10255
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.08881 0.50735 0.18 0.8649
+x1 1 2.11496 0.16905 12.51 <.0001
+x2 1 -0.08504 0.16905 -0.50 0.6270
+
+                                       g=1
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 74.88229 74.88229 321.71 <.0001
+Error 4 0.93105 0.23276
+Corrected Total 5 75.81333
+
+Root MSE 0.48245 R-Square 0.9877
+Dependent Mean 7.33333 Adj R-Sq 0.9846
+Coeff Var 6.57892
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.09333 0.44914 0.21 0.8455
+x1 1 2.06857 0.11533 17.94 <.0001
+
+                                       g=2
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 95.58914 95.58914 117.86 0.0004
+Error 4 3.24419 0.81105
+Corrected Total 5 98.83333
+
+Root MSE 0.90058 R-Square 0.9672
+Dependent Mean 19.23333 Adj R-Sq 0.9590
+Coeff Var 4.68240
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 -2.96952 2.07795 -1.43 0.2262
+x1 1 2.33714 0.21528 10.86 0.0004
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 14.40000 14.40000 108.00 0.0019
+Error 3 0.40000 0.13333
+Corrected Total 4 14.80000
+
+Root MSE 0.36515 R-Square 0.9730
+Dependent Mean 4.20000 Adj R-Sq 0.9640
+Coeff Var 8.69401
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.60000 0.38297 1.57 0.2152
+x 1 1.20000 0.11547 10.39 0.0019
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 14.40000 14.40000 108.00 0.0019
+Error 3 0.40000 0.13333
+Corrected Total 4 14.80000
+
+Root MSE 0.36515 R-Square 0.9730
+Dependent Mean 4.20000 Adj R-Sq 0.9640
+Coeff Var 8.69401
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.60000 0.38297 1.57 0.2152
+x 1 1.20000 0.11547 10.39 0.0019
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 539397 539397 975748 <.0001
+Error 9998 5526.93189 0.55280
+Corrected Total 9999 544924
+
+Root MSE 0.74351 R-Square 0.9899
+Dependent Mean 13.28333 Adj R-Sq 0.9899
+Coeff Var 5.59730
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.04242 0.01533 2.77 0.0057
+x1 1 2.03706 0.00206 987.80 <.0001
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 593.39643 593.39643 975.94 <.0001
+Error 10 6.08023 0.60802
+Corrected Total 11 599.47667
+
+Root MSE 0.77976 R-Square 0.9899
+Dependent Mean 13.28333 Adj R-Sq 0.9888
+Coeff Var 5.87020
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.04242 0.47991 0.09 0.9313
+x1 1 2.03706 0.06521 31.24 <.0001
+O n=0 v=0
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 593.39643 593.39643 975.94 <.0001
+Error 10 6.08023 0.60802
+Corrected Total 11 599.47667
+
+Root MSE 0.77976 R-Square 0.9899
+Dependent Mean 13.28333 Adj R-Sq 0.9888
+Coeff Var 5.87020
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.04242 0.47991 0.09 0.9313
+x1 1 2.03706 0.06521 31.24 <.0001

@@ -1,8 +1,9 @@
-/* STAT-REG-001: the data set TYPE= attribute, not a _TYPE_ variable, decides
+/* expect-rc: 1
+ * STAT-REG-001: the data set TYPE= attribute, not a _TYPE_ variable, decides
  * whether PROC REG reads summary input (Input Data Sets, S154 p. 8589).
- * Verified token-for-token against a SAS 9.4 run of this program (SAS also
- * logs "WARNING: The variable _NAME_ or _TYPE_ exists in a data set that is
- * not TYPE=CORR, COV, SSCP, etc." for both fits; opensas does not log it).
+ * Verified token-for-token against a SAS 9.4 run of this program. SAS logs
+ * "WARNING: The variable _NAME_ or _TYPE_ exists in a data set that is not
+ * TYPE=CORR, COV, SSCP, etc." for both fits, so the run ends with rc 1.
  *  1. PROC MEANS OUT= has a blank TYPE: REG fits its rows (with _TYPE_ as an
  *     ordinary regressor) as raw observations.
  *  2. A DATA step copy of a CORR OUTP= set has a blank TYPE: SAS fits its

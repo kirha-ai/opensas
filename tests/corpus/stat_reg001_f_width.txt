@@ -1,0 +1,84 @@
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: y
+
+Number of Observations Read 20
+Number of Observations Used 20
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 2659.20006 2659.20006 1.215E7 <.0001
+Error 18 0.00394 0.00021888
+Corrected Total 19 2659.20400
+
+Root MSE 0.01479 R-Square 1.0000
+Dependent Mean 21.02000 Adj R-Sq 1.0000
+Coeff Var 0.07038
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.02316 0.00687 3.37 0.0034
+x 1 1.99970 0.00057371 3485.55 <.0001
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: z
+
+Number of Observations Read 20
+Number of Observations Used 20
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 2636.05414 2636.05414 13381.5 <.0001
+Error 18 3.54586 0.19699
+Corrected Total 19 2639.60000
+
+Root MSE 0.44384 R-Square 0.9987
+Dependent Mean 21.60000 Adj R-Sq 0.9986
+Coeff Var 2.05481
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.69474 0.20618 3.37 0.0034
+x 1 1.99098 0.01721 115.68 <.0001
+
+The REG Procedure
+Model: MODEL1
+Dependent Variable: w
+
+Number of Observations Read 20
+Number of Observations Used 20
+
+Analysis of Variance
+
+Sum of Mean
+Source DF Squares Square F Value Pr > F
+
+Model 1 2657.60054 2657.60054 1349087 <.0001
+Error 18 0.03546 0.00197
+Corrected Total 19 2657.63600
+
+Root MSE 0.04438 R-Square 1.0000
+Dependent Mean 21.06000 Adj R-Sq 1.0000
+Coeff Var 0.21075
+
+Parameter Estimates
+
+Parameter Standard
+Variable DF Estimate Error t Value Pr > |t|
+
+Intercept 1 0.06947 0.02062 3.37 0.0034
+x 1 1.99910 0.00172 1161.50 <.0001

@@ -8,6 +8,7 @@ const lists = @import("variable_lists.zig");
 const by_groups = @import("by_groups.zig");
 const eq = std.ascii.eqlIgnoreCase;
 const ridge_parse = @import("reg_ridge_parse.zig");
+const typed = @import("reg_typed.zig");
 pub const Model = struct {
     label: []const u8,
     statement_index: usize = 0,
@@ -55,6 +56,8 @@ pub const Spec = struct {
     pcomit: []const f64 = &.{},
     outvif: bool = false,
     ridge_plots: ridge_parse.Plots = .{},
+    /// STAT-REG-001: fitted from a TYPE=CORR/COV/SSCP set (no observation counts).
+    summary: bool = false,
 };
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -96,7 +99,8 @@ fn unsupported(cx: proc.ProcCtx, tok: lex.Token, known: []const []const u8) diag
     for (known) |name| if (eq(tok.text, name)) return proc.failGap(cx.diags, tok.line, "PROC REG: {s} is not implemented", .{tok.text});
     return cx.diags.fail(error.ParseError, tok.line, "PROC REG: invalid option or statement {s}", .{tok.text});
 }
-pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
+pub fn parse(cx: proc.ProcCtx, t_in: []const lex.Token) diag.Error!Spec {
+    var t = t_in;
     var i: usize = 2;
     var name: ?[]const u8 = null;
     var qualified_name_at: ?usize = null;
@@ -212,11 +216,20 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         try input_tokens.append(cx.arena, .{ .tag = .name, .text = name.?, .line = t[start].line });
         try input_tokens.appendSlice(cx.arena, t[start + 3 ..]);
     }
-    const ds = try proc.procInput(cx.arena, raw, if (qualified_name_at != null) input_tokens.items else t, cx.diags);
-    // STAT-REG-019: TYPE=CORR/COV/SSCP summary input (the CPU-saving mode of
-    // "Computer Resources", p. 8650) is not implemented. Reading its rows as
-    // observations would print plausible wrong fits, so any typed set is loud.
-    if (raw.ds_type orelse ds.ds_type) |ty| return proc.failGap(cx.diags, t[0].line, "PROC REG: TYPE={s} input data sets are not implemented", .{ty});
+    var ds = try proc.procInput(cx.arena, raw, if (qualified_name_at != null) input_tokens.items else t, cx.diags);
+    // STAT-REG-001: TYPE=CORR/COV/SSCP input (Input Data Sets, pp. 8588-8590)
+    // is expanded to moment-equivalent observations; raw-only statements and
+    // options are removed as SAS does. Any other TYPE stays loud (STAT-REG-019).
+    var summary = false;
+    if (raw.ds_type orelse ds.ds_type) |ty| {
+        const kind = typed.kindOf(ty) orelse return proc.failGap(cx.diags, t[0].line, "PROC REG: TYPE={s} input data sets are not implemented", .{ty});
+        ds = try typed.expand(cx.arena, cx.diags, t[0].line, ds, kind);
+        t = try typed.strip(cx, t, i, ty);
+        summary = true;
+    } else if (ds.indexOf("_type_") != null or ds.indexOf("_name_") != null) {
+        // SAS 9.4 run: logged for an ordinary set carrying either variable.
+        try cx.diags.warnStatus(t[0].line, "The variable _NAME_ or _TYPE_ exists in a data set that is not TYPE=CORR, COV, SSCP, etc.", .{});
+    }
     var models: std.ArrayList(Model) = .empty;
     var mtests: std.ArrayList(@import("reg_mtest.zig").Spec) = .empty;
     var tests: std.ArrayList(@import("reg_test.zig").Spec) = .empty;
@@ -454,9 +467,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (model.hcc) return proc.failGap(cx.diags, 0, "PROC REG: heteroscedasticity-consistent hypothesis tests are not implemented", .{});
         if (model.restrictions.len > 0 or model.selection.method != .none or ridge.len > 0 or pcomit.len > 0) return proc.failGap(cx.diags, 0, "PROC REG: MTEST with RESTRICT, selection, RIDGE, or PCOMIT is not implemented", .{});
     };
+    if (summary and (freq != null or weight != null or ids.len > 0 or outest != null or ridge.len > 0 or pcomit.len > 0 or code != null or mtests.items.len > 0)) return proc.failGap(cx.diags, t[0].line, "PROC REG: FREQ, WEIGHT, ID, OUTEST=, RIDGE=, PCOMIT=, CODE or MTEST with TYPE= input is not implemented", .{});
+    if (summary) for (models.items) |model| if (model.restrictions.len > 0 or model.selection.method != .none) return proc.failGap(cx.diags, t[0].line, "PROC REG: RESTRICT or selection with TYPE= input is not implemented", .{});
     const by = try by_statements.resolve(cx.arena, ds, cx.diags);
     if (code != null and (by.names.len > 0 or models.items.len != 1 or ridge.len > 0 or pcomit.len > 0 or models.items[0].selection.method != .none)) return proc.failGap(cx.diags, code.?.line, "PROC REG CODE for BY, multiple models, selection, RIDGE or IPC is not implemented", .{});
     const bcols = try cx.arena.alloc(usize, by.names.len);
     for (by.names, 0..) |n, j| bcols[j] = ds.indexOf(n).?;
-    return .{ .code = code, .ds = ds, .models = models.items, .mtests = mtests.items, .tests = tests.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .pcomit = pcomit, .outvif = outvif, .ridge_plots = ridge_plots };
+    return .{ .code = code, .ds = ds, .models = models.items, .mtests = mtests.items, .tests = tests.items, .required = required.items, .by = bcols, .descending = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .ids = ids, .noprint = noprint, .outest = outest, .covout = covout, .output_variables = output_variables.items, .ridge = ridge, .pcomit = pcomit, .outvif = outvif, .ridge_plots = ridge_plots, .summary = summary };
 }
