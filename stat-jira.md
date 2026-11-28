@@ -11,9 +11,10 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **Interim (not a receipt):** oracle-present `zig build install` 0 and `zig build gate -j2` 0 at `3e0f629f` (first six batch-7 tickets): 2492/2492 unit, 2441/2441 corpus, 11/11 programs. STAT-MI-001 was integrated after it. New dev subagents run on Opus 5.5 at the user's request (from STAT-QUANTREG-001 on).
-- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-GLMSELECT-001, dev3 STAT-SURVEYLOGISTIC-001, dev4 STAT-SURVEYREG-001, dev5 STAT-VARCOMP-001, dev6 STAT-GEE-001, dev7 STAT-FACTOR-001.
+- **Returned, NOT yet integrated:** STAT-GLMSELECT-001 (PARK) on `stat-b7/glmselect001-dev2` (code `7b63eacb`, tracker `a45059e3`, base `ff8e0681`); cherry-pick it after the second interim gate finishes.
+- **Live slots (auto):** dev1 STAT-QUANTREG-001, dev2 STAT-SASHELP-001, dev3 STAT-SURVEYLOGISTIC-001, dev4 STAT-SURVEYREG-001, dev5 STAT-VARCOMP-001, dev6 STAT-GEE-001, dev7 STAT-FACTOR-001.
 - **Integrated locally, awaiting batch verification (auto):** STAT-LIFETEST-003 (PARK), STAT-LIFEREG-001 (PARK), STAT-MULTTEST-001 (PARK), STAT-MIANALYZE-001 (PARK), STAT-PROBIT-001 (PARK), STAT-GENMOD-003 (PARK), STAT-MI-001 (PARK), STAT-STDRATE-001 (PARK), STAT-SURVEYMEANS-001 (PARK), STAT-NLIN-001 (PARK), STAT-PRINCOMP-001 (PARK), STAT-SURVEYFREQ-001 (PARK).
-- **Counts:** 55 DONE, 92 PARK, 7 DOING, 1268 TODO.
+- **Counts:** 55 DONE, 93 PARK, 7 DOING, 1267 TODO.
 - **Next:** resume the two retained partial tickets or dispatch new eligible tickets from the current tip; run the open review above.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed SHA `9c4780bff01fd8fecf5074ac7ae4b34f6888f3dd` (batch 6; batch 5 was `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -1627,7 +1628,7 @@ Complete prerequisite shared contracts first, then each PROC's data input, model
 
 <a id="stat-sashelp-001"></a>
 
-### [TODO] STAT-SASHELP-001 — SASHELP example data — Baseball Data / Tropical Rain Forest Tree Data / 2003 Birth Weight Data Set
+### [DOING @dev2] STAT-SASHELP-001 — SASHELP example data — Baseball Data / Tropical Rain Forest Tree Data / 2003 Birth Weight Data Set
 
 - Source: S154 / Sashelp Data Sets / `Baseball Data` (PDF pp. 10897–10899); S154 / Sashelp Data Sets / `Tropical Rain Forest Tree Data` (PDF pp. 10899–10901); S154 / Sashelp Data Sets / `2003 Birth Weight Data Set` (PDF pp. 10901–10902).
 - Scope: For Baseball Data; Tropical Rain Forest Tree Data; 2003 Birth Weight Data Set provide reproducible public example data or the compatible loading method explicitly documented in the source; use public or synthetic data only.
@@ -5949,7 +5950,7 @@ Source: S154, Chapter 56, `The GLMSELECT Procedure`, PDF pp. 4313–4474. Tasks 
 
 <a id="stat-glmselect-001"></a>
 
-### [DOING @dev2] STAT-GLMSELECT-001 — GLMSELECT — Data input, variable roles, and basic options
+### [PARK] STAT-GLMSELECT-001 — GLMSELECT — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 56 / `PROC GLMSELECT Statement` (PDF pp. 4324–4332); S154 / Chapter 56 / `BY Statement` (PDF p. 4332); S154 / Chapter 56 / `FREQ Statement` (PDF p. 4337); S154 / Chapter 56 / `WEIGHT Statement` (PDF pp. 4356–4357).
 - Scope: Integrate PROC GLMSELECT declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; WEIGHT; apply this procedure's rules for missing values, variable roles, and observation selection.
