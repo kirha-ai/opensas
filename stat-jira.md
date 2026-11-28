@@ -1,20 +1,27 @@
 # OpenSAS — SAS/STAT 15.4 implementation backlog
 
-## CURRENT STATE — STOPPED (2026-11-28)
+## CURRENT STATE — ACTIVE (resumed 2026-11-28)
 
 This section is the only current status summary; every section below it is a historical log. Update it after each integration, verification and handoff.
 
-- **State:** STOPPED after integrating the seven fresh-context deliveries. No DOING ticket, no live dev agent, no dispatch. Resume only on an explicit user request; no new ticket was assigned in this round.
-- **Counts:** 53 DONE, 60 PARK, 0 DOING, 1309 TODO.
+- **State:** ACTIVE on explicit user resume. Seven dev slots assigned 2026-11-28T04:44:17+00:00; implementation deadline 2026-11-28T05:29:17+00:00 (45 minutes, not reset by handoff or steering). Heavy builds are limited to two at a time machine-wide. Coordinator keep-awake: `caffeinate -i -s` PID 62218.
+  - dev1: STAT-PLM-001; `/Users/thomas/kirha/opensas-dev1`; branch `stat-b5/plm001-dev1` from the `feat/stat/batch-4` tip that records this assignment.
+  - dev2: STAT-GLIMMIX-001; `/Users/thomas/kirha/opensas-dev2`; branch `stat-b5/glimmix001-dev2` from the `feat/stat/batch-4` tip that records this assignment.
+  - dev3: STAT-FREQ-014; `/Users/thomas/kirha/opensas-dev3`; branch `stat-b5/freq014-dev3` from the `feat/stat/batch-4` tip that records this assignment.
+  - dev4: STAT-ANOVA-001; `/Users/thomas/kirha/opensas-dev4`; branch `stat-b5/anova001-dev4` from the `feat/stat/batch-4` tip that records this assignment.
+  - dev5: STAT-LIFETEST-001; `/Users/thomas/kirha/opensas-dev5`; branch `stat-b5/lifetest001-dev5` from the `feat/stat/batch-4` tip that records this assignment.
+  - dev6: STAT-PHREG-001; `/Users/thomas/kirha/opensas-dev6`; branch `stat-b5/phreg001-dev6` from the `feat/stat/batch-4` tip that records this assignment.
+  - dev7: STAT-GENMOD-001; `/Users/thomas/kirha/opensas-dev7`; branch `stat-b5/genmod001-dev7` from the `feat/stat/batch-4` tip that records this assignment.
+- **Counts:** 53 DONE, 60 PARK, 7 DOING, 1302 TODO.
 - **Working branch:** `feat/stat/batch-4`. Tested and pushed code SHA `0095ed9b2cc7bd981d4a1a6abf83caccebddfb19` (origin moved `9724fadf` → `0095ed9b`). Later commits on the branch that touch only this file are documentation. No PR created or merged; `main` untouched.
-- **Verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2337/2337 unit tests** (four test binaries: 2219 + 102 + 13 + 3), **2394/2394 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental suite direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean afterwards. Earlier receipts' "unit" figure is the same build-summary total (2217 at `e6e44f54`, +120 tests since).
+- **Last full verification, at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2337/2337 unit tests** (four test binaries: 2219 + 102 + 13 + 3), **2394/2394 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental suite direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean afterwards. Earlier receipts' "unit" figure is the same build-summary total (2217 at `e6e44f54`, +120 tests since).
 - **Integration method:** the seven dev branches all forked from `66263e2d` and each edited this file, so `--ff-only` was possible for one only. They were applied serially by `git cherry-pick` (16 commits, all automatic, no conflict, no hand resolution) in the order FREQ-013, COMMON-028, REG-013, COMMON-033, LOGISTIC-017, GLM-010, COMMON-030. Dev branches and worktrees are retained unmodified; their content is fully contained in the pushed SHA under new commit ids.
-- **This round — new DONE:** STAT-FREQ-013.
-- **This round — integrated, still PARK:** STAT-REG-013, STAT-GLM-010, STAT-COMMON-033, STAT-LOGISTIC-017, STAT-COMMON-030, STAT-COMMON-028. Remaining gaps are in each ticket; their reference folders are not deletion-ready.
+- **Previous round — new DONE:** STAT-FREQ-013.
+- **Previous round — integrated, still PARK:** STAT-REG-013, STAT-GLM-010, STAT-COMMON-033, STAT-LOGISTIC-017, STAT-COMMON-030, STAT-COMMON-028. Remaining gaps are in each ticket; their reference folders are not deletion-ready.
 - **Unchanged original replays with the installed CLI at that SHA** (whitespace-normalised tokens, actual/reference; exit vs reference severity): REG-013 1118/1118 with 2 differing fields (543, 1016: the established bounded residual sums), rc 1/1. GLM-010 761/761 exact, rc 0/0. COMMON-033 242/242 exact, rc 1/1. FREQ-013 649/649 exact, rc 0/0. LOGISTIC-017 0/1153, rc 2/0 (influence plots and PLOTS unsupported, fails loudly). COMMON-030 114/311 (exact ordered GLM prefix), rc 2/0 (PROC PLM unsupported). COMMON-028 0/207, rc 2/0 (PROC GLIMMIX unsupported).
 - **Unintegrated branches:** none of the seven. `codex/stat-reg-interactive-repair` (`7f47dc58`, worktree `/Users/thomas/kirha/opensas-reg-gate-repair`) is an ancestor of the pushed SHA; retained only as history.
 - **Worktrees (all retained, tracked files clean):** `/Users/thomas/kirha/opensas-dev1` `codex/stat-b4-fresh-reg013` `d8721a4e` (eight untracked `.stat-*-evidence/` directories preserved); dev2 `codex/stat-b4-fresh-glm010` `2f33ee7f`; dev3 `codex/stat-b4-fresh-common033` `ddb4e0fb`; dev4 `codex/stat-b4-fresh-logistic017` `0ae32d87`; dev5 `codex/stat-b4-fresh-common030` `b63be86f`; dev6 `codex/stat-b4-fresh-freq013` `c0d397e0`; dev7 `codex/stat-b4-fresh-common028` `d885422e`. New work must start on a new branch from the current `feat/stat/batch-4` tip, not from these tips.
-- **Processes:** no dev or second coordinator was writing at takeover. `caffeinate -dimsu` PID 67392 belongs to the previous coordinator's host process and was left alone; this round's own keep-awake was stopped at handoff.
+- **Processes:** no dev or second coordinator was writing at takeover. `caffeinate -dimsu` PID 67392 belongs to the previous coordinator's host process and was left alone; the previous round's own keep-awake was stopped at its handoff.
 - **Next steps on resume:** (1) existing producer tickets that unblock the PARK originals — STAT-PLM-001/002/005/007 for COMMON-030, STAT-GLIMMIX-001/002/015 for COMMON-028, LOGISTIC-008/015/021/022/023 for LOGISTIC-017; (2) REG-013 SPEC/DWPROB, GLM-010 multi-factor REPEATED, COMMON-033 remaining adapters; (3) otherwise the next eligible TODO tickets. FREQ-013's reference folder is safe to delete but was not deleted; that is the user's decision.
 
 ## Historical ACTIVE log — resumed 2026-11-27 (superseded by CURRENT STATE above)
@@ -1881,7 +1888,7 @@ Source: S154, Chapter 29, `The ANOVA Procedure`, PDF pp. 1105–1162. Tasks in t
 
 <a id="stat-anova-001"></a>
 
-### [TODO] STAT-ANOVA-001 — ANOVA — Data input, variable roles, and basic options
+### [DOING @dev4] STAT-ANOVA-001 — ANOVA — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 29 / `PROC ANOVA Statement` (PDF pp. 1115–1117); S154 / Chapter 29 / `BY Statement` (PDF pp. 1117–1118); S154 / Chapter 29 / `FREQ Statement` (PDF p. 1119); S154 / Chapter 29 / `Missing Values` (PDF pp. 1138–1139).
 - Scope: Integrate PROC ANOVA declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -4257,7 +4264,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-014"></a>
 
-### [TODO] STAT-FREQ-014 — FREQ — Cochran-Mantel-Haenszel Statistics
+### [DOING @dev3] STAT-FREQ-014 — FREQ — Cochran-Mantel-Haenszel Statistics
 
 - Source: S154 / Chapter 47 / `Cochran-Mantel-Haenszel Statistics` (PDF pp. 3223–3233).
 - Scope: Implement Cochran-Mantel-Haenszel Statistics. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -4751,7 +4758,7 @@ Source: S154, Chapter 51, `The GENMOD Procedure`, PDF pp. 3481–3686. Tasks in 
 
 <a id="stat-genmod-001"></a>
 
-### [TODO] STAT-GENMOD-001 — GENMOD — Data input, variable roles, and basic options
+### [DOING @dev7] STAT-GENMOD-001 — GENMOD — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 51 / `PROC GENMOD Statement` (PDF pp. 3509–3514); S154 / Chapter 51 / `BY Statement` (PDF pp. 3525–3526); S154 / Chapter 51 / `FREQ Statement` (PDF p. 3541); S154 / Chapter 51 / `STRATA Statement` (PDF pp. 3565–3567); S154 / Chapter 51 / `WEIGHT Statement` (PDF p. 3567); S154 / Chapter 51 / `Missing Values` (PDF p. 3616).
 - Scope: Integrate PROC GENMOD declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -4987,7 +4994,7 @@ Source: S154, Chapter 52, `The GLIMMIX Procedure`, PDF pp. 3687–4042. Tasks in
 
 <a id="stat-glimmix-001"></a>
 
-### [TODO] STAT-GLIMMIX-001 — GLIMMIX — Data input, variable roles, and basic options
+### [DOING @dev2] STAT-GLIMMIX-001 — GLIMMIX — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 52 / `PROC GLIMMIX Statement` (PDF pp. 3703–3730); S154 / Chapter 52 / `BY Statement` (PDF pp. 3730–3731); S154 / Chapter 52 / `FREQ Statement` (PDF p. 3750); S154 / Chapter 52 / `ID Statement` (PDF pp. 3750–3751); S154 / Chapter 52 / `WEIGHT Statement` (PDF p. 3817); S154 / Chapter 52 / `Missing Level Combinations` (PDF p. 3876).
 - Scope: Integrate PROC GLIMMIX declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; WEIGHT; Missing Level Combinations; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -8461,7 +8468,7 @@ Source: S154, Chapter 77, `The LIFETEST Procedure`, PDF pp. 5639–5754. Tasks i
 
 <a id="stat-lifetest-001"></a>
 
-### [TODO] STAT-LIFETEST-001 — LIFETEST — Data input, variable roles, and basic options
+### [DOING @dev5] STAT-LIFETEST-001 — LIFETEST — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 77 / `PROC LIFETEST Statement` (PDF pp. 5650–5662); S154 / Chapter 77 / `BY Statement` (PDF pp. 5662–5663); S154 / Chapter 77 / `FREQ Statement` (PDF p. 5663); S154 / Chapter 77 / `ID Statement` (PDF p. 5663); S154 / Chapter 77 / `STRATA Statement` (PDF pp. 5663–5668); S154 / Chapter 77 / `WEIGHT Statement` (PDF p. 5670); S154 / Chapter 77 / `Missing Values` (PDF pp. 5670–5671).
 - Scope: Integrate PROC LIFETEST declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -10893,7 +10900,7 @@ Source: S154, Chapter 92, `The PHREG Procedure`, PDF pp. 7311–7582. Tasks in t
 
 <a id="stat-phreg-001"></a>
 
-### [TODO] STAT-PHREG-001 — PHREG — Data input, variable roles, and basic options
+### [DOING @dev6] STAT-PHREG-001 — PHREG — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 92 / `PROC PHREG Statement` (PDF pp. 7324–7333); S154 / Chapter 92 / `BY Statement` (PDF p. 7355); S154 / Chapter 92 / `FREQ Statement` (PDF p. 7364); S154 / Chapter 92 / `ID Statement` (PDF p. 7367); S154 / Chapter 92 / `STRATA Statement` (PDF pp. 7388–7389); S154 / Chapter 92 / `WEIGHT Statement` (PDF p. 7391).
 - Scope: Integrate PROC PHREG declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; ID; STRATA; WEIGHT; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -11255,7 +11262,7 @@ Source: S154, Chapter 94, `The PLM Procedure`, PDF pp. 7617–7674. Tasks in thi
 
 <a id="stat-plm-001"></a>
 
-### [TODO] STAT-PLM-001 — PLM — Data input, variable roles, and basic options
+### [DOING @dev1] STAT-PLM-001 — PLM — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 94 / `PROC PLM Statement` (PDF pp. 7628–7632).
 - Scope: Integrate PROC PLM declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement the default input data contract for this procedure; apply this procedure's rules for missing values, variable roles, and observation selection.
