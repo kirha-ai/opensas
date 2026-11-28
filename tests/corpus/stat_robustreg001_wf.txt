@@ -1,0 +1,65 @@
+
+The ROBUSTREG Procedure
+
+                Model Information
+
+Data Set                               WORK.STACK
+Dependent Variable                              y
+Number of Independent Variables                 3
+Number of Observations                         21
+Method                               M Estimation
+
+
+Number of Observations Read          21
+Number of Observations Used          21
+
+
+Parameter Information
+ 
+Parameter    Effect
+
+Intercept    Intercept
+x1           x1       
+x2           x2       
+x3           x3       
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x1            53.0000     58.0000     62.0000     60.4286       9.1683      5.9304
+x2            18.0000     20.0000     24.0000     21.0952       3.1608      2.9652
+x3            82.0000     87.0000     89.5000     86.2857       5.3586      4.4478
+y             10.0000     15.0000     19.5000     17.5238      10.1716      5.9304
+
+
+                        Parameter Estimates
+ 
+                      Standard   95% Confidence     Chi-
+Parameter DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept  1 -37.1076   5.4731 -47.8346 -26.3805   45.97     <.0001
+x1         1   0.8191   0.0620   0.6975   0.9407  174.28     <.0001
+x2         1   0.5173   0.1693   0.1855   0.8492    9.33     0.0022
+x3         1  -0.0728   0.0719  -0.2138   0.0681    1.03     0.3111
+Scale      1   1.4265                                              
+
+
+         Diagnostics Summary
+ 
+Observation
+Type           Proportion      Cutoff
+
+Outlier            0.1905      3.0000
+
+
+   Goodness-of-Fit
+ 
+Statistic       Value
+
+R-Square       0.5803
+AICR          28.6061
+BICR          37.2062
+Deviance      50.9314

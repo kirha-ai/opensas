@@ -1,0 +1,154 @@
+
+_oracle_by=1
+
+The ROBUSTREG Procedure
+
+                  Model Information
+
+Data Set                           WORK._ORACLE_INPUT
+Dependent Variable                                  y
+Number of Independent Variables                     3
+Number of Observations                             21
+Method                                   M Estimation
+
+
+Number of Observations Read          21
+Number of Observations Used          21
+
+
+Parameter Information
+ 
+Parameter    Effect
+
+Intercept    Intercept
+x1           x1       
+x2           x2       
+x3           x3       
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x1            53.0000     58.0000     62.0000     60.4286       9.1683      5.9304
+x2            18.0000     20.0000     24.0000     21.0952       3.1608      2.9652
+x3            82.0000     87.0000     89.5000     86.2857       5.3586      4.4478
+y             10.0000     15.0000     19.5000     17.5238      10.1716      5.9304
+
+
+                        Parameter Estimates
+ 
+                      Standard   95% Confidence     Chi-
+Parameter DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept  1 -42.2854   9.5045 -60.9138 -23.6569   19.79     <.0001
+x1         1   0.9276   0.1077   0.7164   1.1387   74.11     <.0001
+x2         1   0.6507   0.2940   0.0744   1.2270    4.90     0.0269
+x3         1  -0.1123   0.1249  -0.3571   0.1324    0.81     0.3683
+Scale      1   2.2819                                              
+
+
+                    Diagnostics
+ 
+                      Standardized
+                            Robust
+   Obs    exp             Residual      Outlier
+
+     4    e4                3.0381         *      
+    21    e21              -4.5733         *      
+
+
+         Diagnostics Summary
+ 
+Observation
+Type           Proportion      Cutoff
+
+Outlier            0.0952      3.0000
+
+
+   Goodness-of-Fit
+ 
+Statistic       Value
+
+R-Square       0.6659
+AICR          29.5231
+BICR          36.3361
+Deviance     125.7905
+
+_oracle_by=2
+
+The ROBUSTREG Procedure
+
+                  Model Information
+
+Data Set                           WORK._ORACLE_INPUT
+Dependent Variable                                  y
+Number of Independent Variables                     3
+Number of Observations                             21
+Method                                   M Estimation
+
+
+Number of Observations Read          21
+Number of Observations Used          21
+
+
+Parameter Information
+ 
+Parameter    Effect
+
+Intercept    Intercept
+x1           x1       
+x2           x2       
+x3           x3       
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x1            53.0000     58.0000     62.0000     60.4286       9.1683      5.9304
+x2            18.0000     20.0000     24.0000     21.0952       3.1608      2.9652
+x3            82.0000     87.0000     89.5000     86.2857       5.3586      4.4478
+y             10.0000     15.0000     19.5000     17.5238      10.1716      5.9304
+
+
+                        Parameter Estimates
+ 
+                      Standard   95% Confidence     Chi-
+Parameter DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept  1 -42.2854   9.5045 -60.9138 -23.6569   19.79     <.0001
+x1         1   0.9276   0.1077   0.7164   1.1387   74.11     <.0001
+x2         1   0.6507   0.2940   0.0744   1.2270    4.90     0.0269
+x3         1  -0.1123   0.1249  -0.3571   0.1324    0.81     0.3683
+Scale      1   2.2819                                              
+
+
+                    Diagnostics
+ 
+                      Standardized
+                            Robust
+   Obs    exp             Residual      Outlier
+
+     4    e4                3.0381         *      
+    21    e21              -4.5733         *      
+
+
+         Diagnostics Summary
+ 
+Observation
+Type           Proportion      Cutoff
+
+Outlier            0.0952      3.0000
+
+
+   Goodness-of-Fit
+ 
+Statistic       Value
+
+R-Square       0.6659
+AICR          29.5231
+BICR          36.3361
+Deviance     125.7905

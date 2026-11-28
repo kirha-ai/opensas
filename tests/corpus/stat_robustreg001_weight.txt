@@ -1,0 +1,136 @@
+
+The ROBUSTREG Procedure
+
+                Model Information
+
+Data Set                               WORK.STACK
+Dependent Variable                              y
+Weight Variable                                 w
+Number of Independent Variables                 3
+Number of Observations                         21
+Method                               M Estimation
+
+
+Number of Observations Read          21
+Number of Observations Used          21
+Sum of Weights                       42
+
+
+Parameter Information
+ 
+Parameter    Effect
+
+Intercept    Intercept
+x1           x1       
+x2           x2       
+x3           x3       
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x1            53.0000     58.0000     62.0000     60.4286       9.1683      5.9304
+x2            18.0000     20.0000     24.0000     21.0952       3.1608      2.9652
+x3            82.0000     87.0000     89.5000     86.2857       5.3586      4.4478
+y             10.0000     15.0000     19.5000     17.5238      10.1716      5.9304
+
+
+                        Parameter Estimates
+ 
+                      Standard   95% Confidence     Chi-
+Parameter DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept  1 -40.5035   8.5173 -57.1971 -23.8099   22.61     <.0001
+x1         1   0.8738   0.1138   0.6508   1.0968   58.97     <.0001
+x2         1   0.7298   0.3113   0.1197   1.3399    5.50     0.0190
+x3         1  -0.1174   0.1114  -0.3357   0.1009    1.11     0.2919
+Scale      1   2.2452                                              
+
+
+         Diagnostics Summary
+ 
+Observation
+Type           Proportion      Cutoff
+
+Outlier            0.0952      3.0000
+
+
+   Goodness-of-Fit
+ 
+Statistic       Value
+
+R-Square       0.7334
+AICR          61.8358
+BICR          51.3117
+Deviance     197.2633
+
+The ROBUSTREG Procedure
+
+                Model Information
+
+Data Set                                WORK.MISS
+Dependent Variable                              y
+Weight Variable                                 w
+Number of Independent Variables                 3
+Number of Observations                         16
+Missing Values                                  5
+Method                               M Estimation
+
+
+Number of Observations Read          21
+Number of Observations Used          16
+Sum of Weights                       32
+Missing Values                        5
+
+
+Parameter Information
+ 
+Parameter    Effect
+
+Intercept    Intercept
+x1           x1       
+x2           x2       
+x3           x3       
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x1            50.0000     58.0000     62.0000     59.3750       9.7903      8.8956
+x2            18.0000     19.0000     21.5000     20.3125       3.1983      1.4826
+x3            81.0000     87.0000     89.0000     85.1250       5.4635      4.4478
+y              8.5000     13.5000     16.5000     16.1875      10.4768      6.6717
+
+
+                        Parameter Estimates
+ 
+                      Standard   95% Confidence     Chi-
+Parameter DF Estimate    Error       Limits       Square Pr > ChiSq
+
+Intercept  1 -51.6877  12.5492 -76.2836 -27.0918   16.96     <.0001
+x1         1   0.5910   0.1732   0.2516   0.9304   11.65     0.0006
+x2         1   1.5435   0.4756   0.6114   2.4756   10.53     0.0012
+x3         1   0.0208   0.1610  -0.2947   0.3363    0.02     0.8972
+Scale      1   2.6885                                              
+
+
+         Diagnostics Summary
+ 
+Observation
+Type           Proportion      Cutoff
+
+Outlier            0.0000      3.0000
+
+
+   Goodness-of-Fit
+ 
+Statistic       Value
+
+R-Square       0.7309
+AICR          44.6051
+BICR          33.0322
+Deviance     158.5914

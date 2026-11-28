@@ -3187,6 +3187,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "robustreg")) {
+        // Titles and BY lines are emitted per page by the procedure.
+        var robustreg_context = pcx;
+        robustreg_context.listing_titles = g;
+        const robustreg_start = out.items.len;
+        try sas.robustreg.run(robustreg_context, out, toks);
+        if (out.items.len > robustreg_start) try g.emitFootnotes(a, out);
     } else if (eqi(proc, "lifetest")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifetest.run(pcx, &body, toks);
