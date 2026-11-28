@@ -1,4 +1,4 @@
-//! STAT-NESTED-001 permanent tests: PROC NESTED options, CLASS/VAR/BY roles,
+//! STAT-NESTED-001/-002 permanent tests: PROC NESTED options, CLASS/VAR/BY roles,
 //! missing values, level runs, the balanced closed form and loud boundaries,
 //! asserted through the captured diagnostics reporter (no spawned process).
 //! Data are invented (D-011); expected values are hand sums of squares that
@@ -242,4 +242,63 @@ test "STAT-NESTED-001 repeated CLASS/VAR statements, LABEL, ATTRIB, all-missing 
     try expectEqual(@as(usize, 0), none.len);
     try expect(!diag.gapHit());
     try expect(!e.diags.hasErrors());
+}
+
+test "STAT-NESTED-002 three-stage balanced variance components match a hand calculation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Batch(2) / Sample(2) / Assay(2), 2 replicates each (invented data).
+    const ys = [_]f64{ 10, 12, 11, 15, 14, 13, 18, 16, 20, 17, 19, 22, 15, 16, 21, 18 };
+    var keys: [16][]const Value = undefined;
+    for (0..16) |i| keys[i] = try a.dupe(Value, &.{
+        .{ .num = @floatFromInt(i / 8 + 1) }, .{ .num = @floatFromInt(i / 4 % 2 + 1) }, .{ .num = @floatFromInt(i / 2 % 2 + 1) },
+    });
+    const d = try nested.design(a, &keys);
+    try expect(d.balanced);
+    try std.testing.expectEqualSlices(usize, &.{ 2, 4, 8 }, d.levels);
+    const r = try nested.anova(a, d, &ys);
+    try expectEqual(@as(usize, 16), r.n);
+    try std.testing.expectEqualSlices(usize, &.{ 1, 2, 4, 8 }, r.df);
+    // Diagonal EMS coefficients = observations per level of each factor.
+    try std.testing.expectEqualSlices(f64, &.{ 8, 4, 2 }, r.coef);
+    // Hand: grand mean 257/16; batch means 14.125, 18; sample means 12, 15.25,
+    // 19.5, 17.5; assay means 11, 13, 13.5, 17, 18.5, 20.5, 15.5, 19.5.
+    try approx(@as(f64, 16.0625), r.mean, 1e-12);
+    try approx(@as(f64, 186.9375), r.total_ss, 1e-10);
+    try approx(@as(f64, 95.0625), r.ss[0], 1e-10);
+    try approx(@as(f64, 29.125), r.ss[1], 1e-10);
+    try approx(@as(f64, 36.25), r.ss[2], 1e-10);
+    try approx(@as(f64, 26.5), r.ss[3], 1e-10);
+    const x = try nested.derive(a, r);
+    try approx(@as(f64, 3.3125), x.comp[3], 1e-12);
+    try approx(@as(f64, (9.0625 - 3.3125) / 2.0), x.comp[2], 1e-12);
+    try approx(@as(f64, (14.5625 - 9.0625) / 4.0), x.comp[1], 1e-12);
+    try approx(@as(f64, (95.0625 - 14.5625) / 8.0), x.comp[0], 1e-12);
+    try approx(@as(f64, 17.625), x.total_comp, 1e-12);
+    try approx(@as(f64, 2.4375), x.se_mean, 1e-12);
+    // F(1,2) upper tail in closed form: 1 - sqrt(x), x = F/(F+2).
+    const f0: f64 = 95.0625 / 14.5625;
+    try approx(f0, x.f[0], 1e-12);
+    try approx(1 - @sqrt(f0 / (f0 + 2)), x.p[0], 1e-9);
+    // F(2,4) upper tail in closed form: (1 + 2F/4)^-2.
+    const f1: f64 = 14.5625 / 9.0625;
+    try approx(1 / ((1 + f1 / 2) * (1 + f1 / 2)), x.p[1], 1e-9);
+    // F(4,8): x = F/(F+2), tail = sum_{j<2} C(5,j) x^j (1-x)^(5-j).
+    const f2: f64 = 9.0625 / 3.3125;
+    const xb = f2 / (f2 + 2);
+    try approx(std.math.pow(f64, 1 - xb, 5) + 5 * xb * std.math.pow(f64, 1 - xb, 4), x.p[2], 1e-9);
+}
+
+test "STAT-NESTED-002 listing precision conventions of the default analysis" {
+    var e: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer e.arena.deinit();
+    try e.init();
+    const out = try e.run("proc nested data=s; class a b; var y; run;");
+    // SS / mean square / component 6 decimals, F 2, Pr > F and percent 4,
+    // mean and its standard error 8 (SAS 15.4 reference listings).
+    try expect(std.mem.indexOf(u8, out, "Total            7       28.875000                                      4.125000        5.625000    100.0000") != null);
+    try expect(std.mem.indexOf(u8, out, "b                2       16.250000       2.60    0.1890    Error        8.125000        2.500000     44.4444") != null);
+    try expect(std.mem.indexOf(u8, out, "y Mean                          4.87500000") != null);
+    try expect(std.mem.indexOf(u8, out, "Standard Error of y Mean        0.12500000") != null);
 }

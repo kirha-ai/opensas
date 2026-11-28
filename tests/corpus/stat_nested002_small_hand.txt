@@ -1,0 +1,55 @@
+Three-stage nested design
+
+The NESTED Procedure
+
+       Coefficients of Expected Mean Squares
+ 
+Source      Batch      Sample      Assay      Error
+
+Batch           8           4          2          1
+Sample          0           4          2          1
+Assay           0           0          2          1
+Error           0           0          0          1
+
+
+                          Nested Random Effects Analysis of Variance for Variable Y
+ 
+Variance                    Sum of                         Error                         Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term       Mean Square       Component    of Total
+
+Total           15      186.937500                                      12.462500       17.625000    100.0000
+Batch            1       95.062500       6.53    0.1251    Sample       95.062500       10.062500     57.0922
+Sample           2       29.125000       1.61    0.3075    Assay        14.562500        1.375000      7.8014
+Assay            4       36.250000       2.74    0.1053    Error         9.062500        2.875000     16.3121
+Error            8       26.500000                                       3.312500        3.312500     18.7943
+
+
+Y Mean                         16.06250000
+Standard Error of Y Mean        2.43750000
+Small two-stage nested design
+
+The NESTED Procedure
+
+    Coefficients of Expected
+          Mean Squares
+ 
+Source       A       B      Error
+
+A            4       2          1
+B            0       2          1
+Error        0       0          1
+
+
+                         Nested Random Effects Analysis of Variance for Variable Y
+ 
+Variance                    Sum of                         Error                        Variance     Percent
+Source          DF         Squares    F Value    Pr > F    Term      Mean Square       Component    of Total
+
+Total           11      129.666667                                     11.787879       14.250000    100.0000
+A                2       82.666667       3.54    0.1622    B           41.333333        7.416667     52.0468
+B                3       35.000000       5.83    0.0327    Error       11.666667        4.833333     33.9181
+Error            6       12.000000                                      2.000000        2.000000     14.0351
+
+
+Y Mean                          7.83333333
+Standard Error of Y Mean        1.85592145
