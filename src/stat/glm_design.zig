@@ -21,6 +21,8 @@ pub const Design = struct {
     frequencies: []const f64,
     source_rows: []const usize,
     observations: []const selection.Observation,
+    /// Original analysis/BY slice, before response-complete-case selection.
+    input_observations: []const selection.Observation = &.{},
     classes: []const Class,
     effects: []const Effect,
     n: usize,
@@ -118,5 +120,5 @@ pub fn build(cx: proc.ProcCtx, spec: parse.Spec, group: selection.View, response
             }
         }
     }
-    return .{ .x = x, .y = y, .weights = weights, .frequencies = frequencies, .source_rows = source_rows, .observations = usable.observations, .classes = infos, .effects = effects, .n = n, .p = p, .read = group.observations.len, .response = response };
+    return .{ .x = x, .y = y, .weights = weights, .frequencies = frequencies, .source_rows = source_rows, .observations = usable.observations, .input_observations = group.observations, .classes = infos, .effects = effects, .n = n, .p = p, .read = group.observations.len, .response = response };
 }

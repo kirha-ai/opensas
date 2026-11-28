@@ -11,7 +11,7 @@ const estimability = @import("glm_estimability.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const inference = @import("lsmeans_inference.zig");
-pub const Request = struct { effect: usize, scheffe: bool = false, slice_columns: []const usize = &.{}, error_effect: ?usize = null, error_kind: ?@import("glm_test_statement.zig").Kind = null, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
+pub const Request = struct { effect: usize, at: ?@import("glm_lsmeans_at.zig").Request = null, scheffe: bool = false, slice_columns: []const usize = &.{}, error_effect: ?usize = null, error_kind: ?@import("glm_test_statement.zig").Kind = null, e: bool = false, stderr: bool = false, singular: f64 = 1e-4, pdiff: bool = false, cl: bool = false, alpha: f64 = 0.05, adjust: inference.Adjustment = .none, adjust_explicit: bool = false };
 pub const Mean = struct { levels: []const ?usize, coefficients: []const f64, inference: estimability.Result };
 pub const Table = struct { slices: []const @import("glm_lsmeans_slice.zig").Result = &.{}, effect: []const u8, classes: []const coded.Class, columns: []const coded.Column, means: []const Mean, comparisons: []const inference.Difference = &.{}, mean_limits: []const inference.Interval = &.{}, df_error: usize = 0 };
 
@@ -97,6 +97,9 @@ pub fn read(cx: proc.ProcCtx, tokens: []const lex.Token, spec: parse.Spec, effec
             if (columns.items.len == 0 or (parenthesized and (i >= tokens.len or tokens[i].tag != .rparen))) return cx.diags.fail(error.ParseError, token.line, "PROC GLM: malformed SLICE factor list", .{});
             if (parenthesized) i += 1;
             options.slice_columns = columns.items;
+        } else if (eq(token.text, "at")) {
+            if (options.at != null) return proc.failGap(cx.diags, token.line, "PROC GLM: multiple AT specifications are not implemented", .{});
+            options.at = try @import("glm_lsmeans_at.zig").read(cx, tokens, &i, spec, effects);
         } else if (eq(token.text, "cl")) {
             options.cl = true;
             i += 1;
@@ -184,6 +187,7 @@ fn computeResolved(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request
     defer model.deinit(a);
     model.fit.mse = mse;
     model.fit.df_error = df_error;
+    const at = if (request.at) |setting| try @import("glm_lsmeans_at.zig").compute(cx, spec, d, setting) else null;
     var means: std.ArrayList(Mean) = .empty;
     var name: []const u8 = spec.effects[request.effect].name;
     for (matrix.columns) |target| {
@@ -212,6 +216,11 @@ fn computeResolved(cx: proc.ProcCtx, spec: parse.Spec, d: design.Design, request
                     count += d.frequencies[r];
                 }
                 l[j] = sum / count;
+                if (at) |setting| {
+                    l[j] = 1;
+                    for (effect.variables) |col| l[j] *= setting.values[col];
+                    if (!std.math.isFinite(l[j])) return proc.failGap(cx.diags, 0, "PROC GLM: AT covariate product exceeds the supported numerical domain", .{});
+                }
             } else if (!compatible(target.class_values, column.class_values)) {
                 l[j] = 0;
             } else {
@@ -674,3 +683,5 @@ test "STAT-COMMON-026 GLM ALPHA without CL cannot alter or suppress requested pr
 }
 
 test { _ = @import("glm_slice_tests.zig"); }
+
+test { _ = @import("glm_lsmeans_at_tests.zig"); }
