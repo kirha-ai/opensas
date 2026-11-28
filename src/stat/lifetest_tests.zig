@@ -154,7 +154,7 @@ test "STAT-LIFETEST-001 invalid declarations are user errors and unimplemented o
         .{ "proc lifetest; time t; weight w; weight w;", 2 },
         // Execution boundaries: valid roles whose results are not implemented.
         .{ "proc lifetest; time t*c(0);", 2 },
-        .{ "proc lifetest; time t*c(0); strata n;", 2 },
+        .{ "proc lifetest; time t*c(0); strata w;", 2 }, // noninteger numeric levels (integer ones: stat_lifetest_numeric_strata)
         .{ "proc lifetest; time t*c(0); strata g n;", 2 },
         // BY, FREQ, WEIGHT, ID and MISSING each execute (corpus fixtures
         // stat_lifetest_{by,freq,weight,id,missing_level}); their

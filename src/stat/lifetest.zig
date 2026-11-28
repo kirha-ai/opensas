@@ -820,7 +820,10 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
     if (sel.obs.len == 0) return gap(cx, 0, "the result for an input without usable observations is not verified", .{});
     if (s.strata.len != 1) return gap(cx, 0, "listing without STRATA or with several STRATA variables is not implemented", .{});
     const strata_info = ds.columns.items[s.strata[0]];
-    if (strata_info.type != .char or strata_info.format != null) return gap(cx, 0, "numeric or formatted STRATA levels are not implemented", .{});
+    if (strata_info.format != null) return gap(cx, 0, "formatted STRATA levels are not implemented", .{});
+    // An unformatted numeric STRATA variable prints in a 12-wide BEST12.
+    // column (SAS listing); the layout is evidenced for integer levels.
+    const numeric = strata_info.type == .num;
     if (sel.levels.len < 2) return gap(cx, 0, "the listing for a single stratum is not verified", .{});
     const time_name = ds.columns.items[s.time].name;
     const strata_name = strata_info.name;
@@ -830,7 +833,11 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
     const labels = try a.alloc([]const u8, sel.levels.len);
     for (sel.levels, labels) |row, *label| {
         // A missing level (MISSING option) is listed blank, ordered first.
-        label.* = std.mem.trimEnd(u8, row[s.strata[0]].str, " ");
+        if (numeric) {
+            const x = row[s.strata[0]].num;
+            if (std.math.isNan(x) or x != @floor(x) or @abs(x) >= 1e8) return gap(cx, 0, "missing or noninteger numeric STRATA levels are not verified", .{});
+            label.* = try std.fmt.allocPrint(a, "{d}", .{@as(i64, @intFromFloat(x))});
+        } else label.* = std.mem.trimEnd(u8, row[s.strata[0]].str, " ");
         if (label.len > 8) return gap(cx, 0, "listing columns for STRATA levels longer than 8 characters are not verified", .{});
     }
     for (sel.obs) |o| if (o.time < 0 or o.time >= 10) return gap(cx, 0, "survival time display outside [0, 10) is not verified", .{});
@@ -952,8 +959,15 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
         if (st.last_censored) try body.appendSlice(a, "\nNOTE: The mean survival time and its standard error were underestimated because the largest observation was censored and the estimation was restricted to the \n      largest event time.\n");
     };
     if (s.notable) try pageHead(a, &body, byline) else try body.appendSlice(a, "\n");
-    try body.appendSlice(a, "\n    Summary of the Number of Censored and Uncensored Values\n \n                                                        Percent\nStratum    ");
-    try padLeft(a, &body, strata_name, 8);
+    // A numeric STRATA column is 12 wide instead of 8; the centred title and
+    // the rule widen with it.
+    const extra: usize = if (numeric) 4 else 0;
+    try body.appendSlice(a, "\n");
+    try body.appendNTimes(a, ' ', 4 + extra / 2);
+    try body.appendSlice(a, "Summary of the Number of Censored and Uncensored Values\n \n");
+    try body.appendNTimes(a, ' ', 56 + extra);
+    try body.appendSlice(a, "Percent\nStratum    ");
+    if (numeric) try padRight(a, &body, strata_name, 12) else try padLeft(a, &body, strata_name, 8);
     try body.appendSlice(a, "       Total  Failed    Censored    Censored\n\n");
     var total: usize = 0;
     var failed: usize = 0;
@@ -961,11 +975,13 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
         total += st.total;
         failed += st.failed;
         try body.print(a, "{d:>7}    ", .{k + 1});
-        try padLeft(a, &body, labels[k], 8);
+        if (numeric) try padRight(a, &body, labels[k], 12) else try padLeft(a, &body, labels[k], 8);
         try body.print(a, "{d:>12}{d:>8}{d:>12}{s:>12}\n", .{ st.total, st.failed, st.total - st.failed, try fixed(a, 100 * @as(f64, @floatFromInt(st.total - st.failed)) / @as(f64, @floatFromInt(st.total)), 2) });
     }
-    try body.appendNTimes(a, '-', 63);
-    try body.print(a, "\n  Total            {d:>12}{d:>8}{d:>12}{s:>12}\n", .{ total, failed, total - failed, try fixed(a, 100 * @as(f64, @floatFromInt(total - failed)) / @as(f64, @floatFromInt(total)), 2) });
+    try body.appendNTimes(a, '-', 63 + extra);
+    try body.appendSlice(a, "\n  Total");
+    try body.appendNTimes(a, ' ', 12 + extra);
+    try body.print(a, "{d:>12}{d:>8}{d:>12}{s:>12}\n", .{ total, failed, total - failed, try fixed(a, 100 * @as(f64, @floatFromInt(total - failed)) / @as(f64, @floatFromInt(total)), 2) });
     try pageHead(a, &body, byline);
     try body.print(a, "\nTesting Homogeneity of Survival Curves for {s} over Strata\n\n\n        Rank Statistics\n \n", .{time_name});
     try padLeft(a, &body, strata_name, 8);
@@ -979,16 +995,17 @@ fn render(cx: proc.ProcCtx, out: *Out, s: Spec, sel: Selected) diag.Error!void {
     for ([_][]const u8{ "Log-Rank", "Wilcoxon" }, [_][]const f64{ h.logrank_cov, h.wilcoxon_cov }, 0..) |title, cov, m| {
         // The title is centred over the 8 + 11 + 14(K-1) column table.
         const heading = try std.fmt.allocPrint(a, "Covariance Matrix for the {s} Statistics", .{title});
-        const width = 8 + 11 + 14 * (K - 1);
+        const first: usize = if (numeric) 9 else 11;
+        const width = 8 + first + 14 * (K - 1);
         try body.appendSlice(a, "\n\n");
         if (width > heading.len) try body.appendNTimes(a, ' ', (width - heading.len + 1) / 2);
         try body.print(a, "{s}\n \n", .{heading});
         try padLeft(a, &body, strata_name, 8);
-        for (labels, 0..) |label, c| try padRight(a, &body, label, if (c == 0) 11 else 14);
+        for (labels, 0..) |label, c| try padRight(a, &body, label, if (c == 0) first else 14);
         try body.appendSlice(a, "\n\n");
         for (labels, 0..) |label, r| {
             try padLeft(a, &body, label, 8);
-            for (0..K) |c| try padRight(a, &body, try covarianceText(a, cov[r * K + c], cov_dec[m * K + c]), if (c == 0) 11 else 14);
+            for (0..K) |c| try padRight(a, &body, try covarianceText(a, cov[r * K + c], cov_dec[m * K + c]), if (c == 0) first else 14);
             try body.append(a, '\n');
         }
     }
