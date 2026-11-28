@@ -37,6 +37,10 @@ pub const Spec = struct {
     mininertia: f64 = 0.8,
     singular: f64 = 1e-8,
     plots_none: bool = false,
+    /// NOROW= / NOCOLUMN= (p.2572): suppress the listing and/or the OUTC=
+    /// observations of the rows or columns.
+    norow: Suppress = .{},
+    nocolumn: Suppress = .{},
     vars: []const usize = &.{},
     id: ?usize = null,
     weight: ?usize = null,
@@ -44,6 +48,8 @@ pub const Spec = struct {
     by_desc: []const bool = &.{},
     notsorted: bool = false,
 };
+
+pub const Suppress = struct { print: bool = false, data: bool = false };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
     return i < t.len and t[i].tag == tag;
@@ -154,6 +160,19 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 if (at(t, j, .lparen)) j = proc.skipParen(t, j);
             } else return invalid(cx, t, j);
             i = j;
+        } else if (eq(o, "norow") or eq(o, "nocolumn")) {
+            var sup: Suppress = .{ .print = true, .data = true };
+            i += 1;
+            if (valued) {
+                const v = if (at(t, i + 1, .name)) t[i + 1].text else "";
+                if (v.len >= 3 and std.ascii.startsWithIgnoreCase("both", v)) {} else if (v.len >= 3 and std.ascii.startsWithIgnoreCase("data", v)) {
+                    sup.print = false;
+                } else if (v.len >= 3 and std.ascii.startsWithIgnoreCase("print", v)) {
+                    sup.data = false;
+                } else return cx.diags.fail(error.ParseError, t[i - 1].line, "PROC CORRESP: {s}= must be BOTH, DATA or PRINT", .{t[i - 1].text});
+                i += 2;
+            }
+            if (eq(o, "norow")) s.norow = sup else s.nocolumn = sup;
         } else if (eq(o, "short") and !valued) {
             s.short = true;
             i += 1;
@@ -692,8 +711,8 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             try body.appendSlice(a, "\nThe CORRESP Procedure\n");
             // p.2571: under ODS Graphics the inertia chart replaces the table.
             if (!graphs) try inertiaTable(a, &body, res, s.chi2p);
-            try pointTables(a, &body, names.items, rp, s.dimens, "Row", s.short, dim_heads, sup);
-            try pointTables(a, &body, col_names, cp, s.dimens, "Column", s.short, dim_heads, null);
+            if (!s.norow.print) try pointTables(a, &body, names.items, rp, s.dimens, "Row", s.short, dim_heads, sup);
+            if (!s.nocolumn.print) try pointTables(a, &body, col_names, cp, s.dimens, "Column", s.short, dim_heads, null);
         }
         if (created) |o| {
             const d = s.dimens;
@@ -710,6 +729,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             for (0..d) |k| values[nb + 5 + d + k] = .{ .num = res.inertias[k] };
             try o.appendRow(values);
             for ([_]bool{ true, false }) |is_row| {
+                if (if (is_row) s.norow.data else s.nocolumn.data) continue;
                 const p = if (is_row) rp else cp;
                 const pn = if (is_row) names.items else col_names;
                 for (pn, 0..) |n, i| {

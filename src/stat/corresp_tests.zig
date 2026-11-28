@@ -176,7 +176,8 @@ test "STAT-CORRESP-001 user errors and loud gaps" {
         .{ .source = "proc corresp data=s dimens=0; var a b; run;", .rc = 1 },
         .{ .source = "proc corresp data=s mininertia=2; var a b; run;", .rc = 1 },
         .{ .source = "proc corresp data=nosuch; var a b; run;", .rc = 1 },
-        .{ .source = "proc corresp data=s norow; var a b c; run;", .rc = 2 },
+        .{ .source = "proc corresp data=s rp; var a b c; run;", .rc = 2 },
+        .{ .source = "proc corresp data=s norow=sideways; var a b c; run;", .rc = 1 },
         .{ .source = "proc corresp data=s mca nvars=3; var a b c; run;", .rc = 2 },
         .{ .source = "proc corresp data=s observed; var a b c; run;", .rc = 2 },
         .{ .source = "proc corresp data=s outf=f; var a b c; run;", .rc = 2 },
@@ -239,4 +240,24 @@ test "STAT-CORRESP-001 negative weights mark supplementary rows" {
     try approx(1, rows[5][col(o, "Quality")].num, 1e-12);
     try expect(rows[4][col(o, "Mass")].isMissing() and rows[4][col(o, "Contr1")].isMissing() and rows[4][col(o, "Best")].isMissing());
     try expect(std.mem.indexOf(u8, output.items, "Supplementary Row Coordinates") != null);
+}
+
+test "STAT-CORRESP-001 NOROW= and NOCOLUMN= suppress listing and OUTC= points" {
+    // p.2572: DATA drops the points from OUTC=, PRINT from the listing, BOTH
+    // (the bare option) from both.
+    var env: Env = .{ .arena = std.heap.ArenaAllocator.init(std.testing.allocator) };
+    defer env.arena.deinit();
+    try env.init();
+    var out: std.ArrayList(u8) = .empty;
+    try env.run(&out, "proc corresp data=s(where=(g=2)) out=o nocol=dat short; var a b c; run;");
+    try expectEqual(@as(usize, 4), env.lib.find("o").?.rows.items.len); // INERTIA + 3 OBS
+    try expect(std.mem.indexOf(u8, out.items, "Column Coordinates") != null);
+    out.clearRetainingCapacity();
+    try env.run(&out, "proc corresp data=s(where=(g=2)) out=o2 norow=print short; var a b c; run;");
+    try expectEqual(@as(usize, 7), env.lib.find("o2").?.rows.items.len);
+    try expect(std.mem.indexOf(u8, out.items, "Row Coordinates") == null);
+    out.clearRetainingCapacity();
+    try env.run(&out, "proc corresp data=s(where=(g=2)) out=o3 norow short; var a b c; run;");
+    try expectEqual(@as(usize, 4), env.lib.find("o3").?.rows.items.len); // INERTIA + 3 VAR
+    try expect(std.mem.indexOf(u8, out.items, "Row Coordinates") == null);
 }
