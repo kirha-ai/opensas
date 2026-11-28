@@ -1,0 +1,246 @@
+R
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 2 A B
+
+
+Number of Observations Read 10
+Number of Observations Used 4
+Sum of Frequencies Read 8
+Sum of Frequencies Used 5
+R
+
+The GLMMOD Procedure
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect g
+
+1 Intercept
+2 g A
+3 g B
+R
+
+The GLMMOD Procedure
+
+Design Points
+
+Observation Column Number
+Number y f w 1 2 3
+
+1 1 1 0 1 1 0
+2 2 1 -2 1 1 0
+3 3 1 . 1 1 0
+4 4 -1 1 1 1 0
+5 5 0 1 1 1 0
+6 6 1 1 1 1 0
+7 7 2 1 1 0 1
+8 8 0 1 1 0 1
+9 9 1 1 1 0 1
+10 10 1 2 1 0 1
+R
+Obs    y    f    w   Col1   Col2   Col3
+
+  1    1    1    0      1      1      0
+  2    2    1   -2      1      1      0
+  3    3    1    .      1      1      0
+  4    4   -1    1      1      1      0
+  5    5    0    1      1      1      0
+  6    6    1    1      1      1      0
+  7    7    2    1      1      0      1
+  8    8    0    1      1      0      1
+  9    9    1    1      1      0      1
+ 10   10    1    2      1      0      1
+R
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 2 A B
+
+
+Number of Observations Read 10
+Number of Observations Used 10
+R
+
+The GLMMOD Procedure
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect g
+
+0 Intercept
+1 g A
+2 g B
+R
+
+The GLMMOD Procedure
+
+Design Points
+
+Observation Column Number
+Number y 0 1 2
+
+1 1 1 1 0
+2 2 1 1 0
+3 3 1 1 0
+4 4 1 1 0
+5 5 1 1 0
+6 6 1 1 0
+7 7 1 0 1
+8 8 1 0 1
+9 9 1 0 1
+10 10 1 0 1
+R
+Obs   _COLNUM_   EFFNAME     g
+
+  1          0   Intercept
+  2          1   g           A
+  3          2   g           B
+R
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 2 A B
+
+
+Number of Observations Read 10
+Number of Observations Used 10
+R
+
+The GLMMOD Procedure
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect g
+
+1 Intercept
+2 g A
+3 g B
+R
+
+The GLMMOD Procedure
+
+Design Points
+
+Observation Column Number
+Number y 1 2 3
+
+1 1 1 1 0
+2 2 1 1 0
+3 3 1 1 0
+4 4 1 1 0
+5 5 1 1 0
+6 6 1 1 0
+7 7 1 0 1
+8 8 1 0 1
+9 9 1 0 1
+10 10 1 0 1
+R
+
+                                       g=A
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 1 A
+
+
+Number of Observations Read 6
+Number of Observations Used 6
+R
+
+                                       g=A
+
+The GLMMOD Procedure
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect g
+
+1 Intercept
+2 g A
+R
+
+                                       g=A
+
+The GLMMOD Procedure
+
+Design Points
+
+Observation Column Number
+Number y 1 2
+
+1 1 1 1
+2 2 1 1
+3 3 1 1
+4 4 1 1
+5 5 1 1
+6 6 1 1
+R
+
+                                       g=B
+
+The GLMMOD Procedure
+
+Class Level Information
+
+Class Levels Values
+
+g 1 B
+
+
+Number of Observations Read 4
+Number of Observations Used 4
+R
+
+                                       g=B
+
+The GLMMOD Procedure
+
+Parameter Definitions
+
+Name of
+Column Associated CLASS Variable Values
+Number Effect g
+
+1 Intercept
+2 g B
+R
+
+                                       g=B
+
+The GLMMOD Procedure
+
+Design Points
+
+Observation Column Number
+Number y 1 2
+
+1 7 1 1
+2 8 1 1
+3 9 1 1
+4 10 1 1

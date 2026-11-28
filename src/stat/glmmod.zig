@@ -147,7 +147,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(option.text, "namelen")) {
             if (!at(t, i, .number)) return invalid(cx, t, i);
             result.namelen = std.fmt.parseInt(usize, t[i].text, 10) catch return invalid(cx, t, i);
-            if (result.namelen < 20 or result.namelen > 200) return invalid(cx, t, i);
+            if (result.namelen < 20 or result.namelen > 200) return cx.diags.fail(error.ParseError, t[i].line, "The parameter value {s} is not within the required range of 20 and 200.", .{t[i].text});
             i += 1;
         } else return invalid(cx, t, i - 2);
     }
@@ -212,11 +212,13 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             var j = i + 1;
             const ci = try variable(cx, result.input.ds, t[0..end], &j);
             if (result.input.ds.columns.items[ci].type != .num) return cx.diags.fail(error.ParseError, t[i].line, "PROC GLMMOD: {s} variable {s} must be numeric", .{ t[i].text, t[i + 1].text });
-            if (kw(t, i, "freq")) result.freq = ci else result.weight = ci;
+            const slot = if (kw(t, i, "freq")) &result.freq else &result.weight;
+            if (slot.* != null) return cx.diags.fail(error.ParseError, t[i].line, "Only one {s} variable may be given.", .{if (kw(t, i, "freq")) @as([]const u8, "FREQUENCY") else "WEIGHT"});
+            slot.* = ci;
         } else if (!kw(t, i, "run") and !kw(t, i, "quit") and !kw(t, i, "where")) return invalid(cx, t, i);
         i = end + 1;
     }
-    if (!model_seen) return cx.diags.fail(error.ParseError, 0, "PROC GLMMOD: MODEL statement required", .{});
+    if (!model_seen) return cx.diags.fail(error.ParseError, if (t.len > 0) t[0].line else 0, "No MODEL statement.", .{});
     result.input.ds = try by.withFormats(cx.arena, result.input.ds, formats.items);
     result.model.classes = classes.items;
     result.model.effects = model_effects.items;
@@ -232,6 +234,13 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
 fn outputColumn(cx: proc.ProcCtx, ds: *Dataset, name: []const u8, t: @import("../pdv.zig").VarType) diag.Error!usize {
     if (ds.indexOf(name) != null) return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD: duplicate output column {s}", .{name});
     return ds.addColumn(name, t);
+}
+
+/// SAS lists and stores FREQ truncated (1.7 -> 1, 0.5 -> 0); missing stays missing.
+fn roleValue(s: Spec, row: []const Value, c: usize) f64 {
+    if (row[c] != .num) return std.math.nan(f64);
+    const x = row[c].num;
+    return if (s.freq == c and std.math.isFinite(x)) @trunc(x) else x;
 }
 
 fn finiteNumber(v: Value) ?f64 {
@@ -319,7 +328,7 @@ fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, d: matrix.Design, 
     const column = try a.alloc(f64, d.n);
     const role_places = try a.alloc(usize, roles.items.len);
     for (roles.items, role_places) |c, *places| {
-        for (d.source_rows, column) |source, *x| x.* = if (rows[source][c] == .num) rows[source][c].num else std.math.nan(f64);
+        for (d.source_rows, column) |source, *x| x.* = roleValue(s, rows[source], c);
         places.* = decimals(a, column) catch return proc.failGap(cx.diags, 0, "PROC GLMMOD: design points with exponent-notation values are not implemented", .{});
     }
     const design_places = try a.alloc(usize, d.p);
@@ -329,7 +338,7 @@ fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, d: matrix.Design, 
     }
     for (d.source_rows, 0..) |source, i| {
         try out.print(a, "{d}", .{i + 1});
-        for (roles.items, role_places) |c, places| try out.print(a, " {s}", .{try cell(a, if (rows[source][c] == .num) rows[source][c].num else std.math.nan(f64), places)});
+        for (roles.items, role_places) |c, places| try out.print(a, " {s}", .{try cell(a, roleValue(s, rows[source], c), places)});
         for (design_places, 0..) |places, j| try out.print(a, " {s}", .{try cell(a, d.x[i * d.p + j], places)});
         try out.append(a, '\n');
     }
@@ -352,7 +361,10 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
     const s = try parse(cx, t);
     const a = cx.arena;
     const groups = try by.checkedSlices(a, s.input.ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
-    if (groups.len == 0) return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD: no observations in the input data set", .{});
+    if (groups.len == 0 or s.input.ds.rows.items.len == 0) {
+        try cx.diags.note(0, "No observations in data set {s}.", .{s.input.ds.name});
+        return cx.diags.fail(error.ExecError, 0, "PROC GLMMOD stopped processing this step because of errors.", .{});
+    }
     const designs = try a.alloc(matrix.Design, groups.len);
     for (groups, designs) |group, *d| {
         if (s.freq orelse s.weight) |_| for (group.rows) |row| for ([_]?usize{ s.freq, s.weight }) |role| if (role) |c| {
@@ -396,7 +408,10 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
         const cells = try a.alloc(Value, width);
         for (groups, designs) |group, d| for (d.source_rows, 0..) |source, i| {
             const row = group.rows[source];
-            for (output.columns.items[0 .. width - d.p], 0..) |col, k| cells[k] = row[ds.indexOf(col.name).?];
+            for (output.columns.items[0 .. width - d.p], 0..) |col, k| {
+                const c = ds.indexOf(col.name).?;
+                cells[k] = if (s.freq == c and row[c] == .num) .{ .num = roleValue(s, row, c) } else row[c];
+            }
             for (0..d.p) |j| cells[width - d.p + j] = .{ .num = d.x[i * d.p + j] };
             try output.appendRow(cells);
         };
@@ -589,4 +604,41 @@ test "STAT-GLMMOD-001 listing counts, FREQ/WEIGHT roles, labels and BY outputs" 
     // Unsorted BY is a user error that publishes nothing.
     try std.testing.expectError(error.ParseError, run(cx, &out, try lex.tokenize(a, "proc glmmod data=roles outdesign=never; by descending g; model y=w; run;", &d)));
     try std.testing.expect(lib.find("never") == null);
+}
+
+test "STAT-GLMMOD-001 declarations: last BY wins, CLASS after MODEL, duplicate roles, NAMELEN, truncated FREQ" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    try fixture(a, &lib);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    var sink: std.ArrayList(u8) = .empty;
+    // p.4238: with more than one BY statement only the last is used (h is unsorted, group is sorted).
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input outparm=last_by noprint; by h; by group; model y=x; run;", &d));
+    try std.testing.expectEqualStrings("group", lib.find("last_by").?.columns.items[0].name);
+    try std.testing.expectEqual(@as(usize, 4), lib.find("last_by").?.rowCount());
+    // Errors carry the statement's line.
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input noprint;\nmodel y=x;\nclass group; run;", &d)));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "CLASS must precede MODEL") != null);
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input noprint; weight x;\nweight z; model y=x; run;", &d)));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Only one WEIGHT variable may be given.") != null);
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input namelen=201 noprint; model y=x; run;", &d)));
+    try std.testing.expectError(error.ParseError, run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input noprint; freq group; model y=x; run;", &d)));
+    // NAMELEN=20 default truncates EFFNAME; NAMELEN=200 keeps it.
+    const long = "proc glmmod data=design_input outparm=np noprint{s}; class group h; model y=group*h*x*z*x*z*x*z*x*z; run;";
+    try run(cx, &sink, try lex.tokenize(a, try std.fmt.allocPrint(a, long, .{""}), &d));
+    try std.testing.expectEqualStrings("x*x*x*x*z*z*z*z*grou", lib.find("np").?.rows.items[1][1].str);
+    try run(cx, &sink, try lex.tokenize(a, try std.fmt.allocPrint(a, long, .{" namelen=200"}), &d));
+    try std.testing.expectEqualStrings("x*x*x*x*z*z*z*z*group*h", lib.find("np").?.rows.items[1][1].str);
+    // FREQ is stored truncated; missing stays missing.
+    const ds = lib.find("design_input").?;
+    @constCast(ds.rows.items[0])[1] = .{ .num = 2.9 };
+    @constCast(ds.rows.items[1])[1] = .{ .num = std.math.nan(f64) };
+    try run(cx, &sink, try lex.tokenize(a, "proc glmmod data=design_input outdesign=fd noprint; freq z; model y=x; run;", &d));
+    const fd = lib.find("fd").?;
+    try std.testing.expectEqualStrings("z", fd.columns.items[1].name);
+    try std.testing.expectEqual(@as(f64, 2), fd.rows.items[0][1].num);
+    try std.testing.expect(std.math.isNan(fd.rows.items[1][1].num));
 }
