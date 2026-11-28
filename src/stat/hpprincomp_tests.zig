@@ -203,7 +203,7 @@ test "STAT-HPPRINCOMP-001 loud gaps for valid but unimplemented requests" {
         "proc hpprincomp data=sample; var x; partial y; run;",
         "proc hpprincomp data=sample; var x y; code file='a.sas'; run;",
         "proc hpprincomp data=sample; var x y; output out=o; run;",
-        "proc hpprincomp data=sample; var x y; performance nthreads=1; run;",
+        "proc hpprincomp data=sample; var x y; performance nthreads=2; run;",
         "proc hpprincomp data=sample; var x g; where g = 1; run;", // zero variance
     };
     for (cases) |c| {

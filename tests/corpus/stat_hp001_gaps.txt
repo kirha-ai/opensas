@@ -1,0 +1,11 @@
+# corpus assertions
+empty-listing
+stderr-count 1 PROC HPREG: PERFORMANCE DETAILS (procedure task timing) is not implemented (STAT-HP-002)
+stderr-count 1 PROC HPREG: PERFORMANCE nthreads=4 is not implemented
+stderr-count 1 PROC HPREG: PERFORMANCE nodes= requests a distributed execution mode
+stderr-count 1 PROC HPREG: PERFORMANCE host= requests a distributed execution mode
+stderr-count 1 PROC HPREG: PERFORMANCE BPC= is not implemented (STAT-HP-002)
+stderr-count 1 PROC HPGENSELECT: PERFORMANCE DETAILS (procedure task timing) is not implemented
+stderr-count 1 PROC HPLOGISTIC: PERFORMANCE nthreads=2 is not implemented
+stderr-count 1 PROC HPPRINCOMP: PERFORMANCE gridmode= requests a distributed execution mode
+stderr-count 1 PROC HPMIXED: PERFORMANCE nthreads=8 is not implemented

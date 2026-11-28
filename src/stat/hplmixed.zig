@@ -14,6 +14,7 @@
 //!   omits it and the step reports a gap (rc 2).
 const std = @import("std");
 const proc = @import("../proc.zig");
+const hp = @import("hp_shared.zig");
 const diag = @import("../diag.zig");
 const lex = @import("../lexer.zig");
 const fmt = @import("../format.zig");
@@ -71,7 +72,7 @@ fn oneOf(name: []const u8, list: []const []const u8) bool {
 /// Documented PROC options (Table 60.2, pp.4701-4705) whose effect is owned by
 /// later HPLMIXED / shared HP tickets.
 const later_options = [_][]const u8{ "absconv", "absfconv", "absgconv", "fconv", "gconv", "maxiter", "maxfunc", "maxtime", "miniter", "technique", "tech", "xconv", "blup", "ranks", "singchol", "singsweep", "singular", "itprint", "tol" };
-const later_statements = [_][]const u8{ "repeated", "parms", "output", "performance", "nloptions", "by", "freq", "weight", "code" };
+const later_statements = [_][]const u8{ "repeated", "parms", "output", "nloptions", "by", "freq", "weight", "code" };
 const later_model_options = [_][]const u8{ "alpha", "cl", "ddfm", "noint", "chisq", "e", "e1", "e2", "e3", "htype" };
 const later_random_options = [_][]const u8{ "group", "grp", "alpha", "cl", "solution", "s", "g", "gcorr", "v", "vcorr" };
 
@@ -275,6 +276,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             // (OUTPUT: later ticket); they are validated and recorded.
             if (end == i + 1) return invalid(cx, t, end);
             for (i + 1..end) |j| try ids.append(cx.arena, try column(cx, ds, t, j));
+        } else if (kw(t, i, "performance")) {
+            // Shared single-machine PERFORMANCE contract (STAT-HP-001).
+            var perf: hp.Performance = .{};
+            try hp.parsePerformance(cx.diags, "HPLMIXED", t, i, end, &perf);
         } else if (at(t, i, .name) and oneOf(t[i].text, &later_statements)) {
             return gap(cx, t[i].line, "{s} statement is not implemented", .{t[i].text});
         } else if (kw(t, i, "run") or kw(t, i, "quit")) {
@@ -634,15 +639,10 @@ pub fn render(cx: proc.ProcCtx, out: *Out, s: Spec, level_rows: []const []const 
     const a = cx.arena;
     const ds = s.input.ds;
     try out.appendSlice(a, "\nThe HPLMIXED Procedure\n\n");
-    // opensas computes on one thread, so it reports 1 where the SAS reference
-    // machine reports its own thread count; thread semantics: STAT-HP-002.
-    try out.appendSlice(a, "      Performance Information\n\nExecution Mode       Single-Machine\nNumber of Threads    1             \n\n\n");
-    const dw = @max(4, s.data_name.len);
-    try title(a, out, "Data Access Information", dw + 32, true);
-    try left(a, out, "Data", dw);
-    try out.appendSlice(a, "    Engine    Role     Path\n\n");
-    try left(a, out, s.data_name, dw);
-    try out.appendSlice(a, "    V9        Input    On Client\n\n\n");
+    // Shared single-machine tables (STAT-HP-001): one truthful thread.
+    try hp.performanceInfo(a, out);
+    try hp.dataAccessInfo(a, out, s.data_name);
+    try out.appendSlice(a, "\n\n");
     const subject = try shortened(cx, s);
     try infoTable(a, out, "Model Information", &.{
         .{ "Data Set", s.data_name },

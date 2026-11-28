@@ -2,8 +2,9 @@
 //! default least-squares fit without a SELECTION statement, SAS/STAT 15.4
 //! physical pp.5028-5031 and 5038 (STAT-HPREG-001). The listing layout is the
 //! one SAS 9.4 prints for invented data (tests/corpus/stat_hpreg_*.sas).
-//! SELECTION, OUTPUT, PARTITION, PERFORMANCE and CODE belong to later HPREG and
-//! shared high-performance tickets (STAT-HP-001..004): each is a D-009 gap
+//! PERFORMANCE follows the shared single-machine contract (hp_shared.zig,
+//! STAT-HP-001). SELECTION, OUTPUT, PARTITION and CODE belong to later HPREG
+//! and shared high-performance tickets (STAT-HP-002..004): each is a D-009 gap
 //! (rc 2) raised before any listing text is written, as is every display
 //! outside the verified layout.
 const std = @import("std");
@@ -15,6 +16,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const by = @import("by_groups.zig");
 const reg_fit = @import("reg_fit.zig");
+const hp = @import("hp_shared.zig");
 const A = std.mem.Allocator;
 const eq = std.ascii.eqlIgnoreCase;
 const Out = std.ArrayList(u8);
@@ -35,6 +37,7 @@ pub const Spec = struct {
     alpha: f64 = 0.05,
     seed: ?f64 = null,
     noprint: bool = false,
+    performance: hp.Performance = .{},
 
     pub fn isClass(self: Spec, index: usize) bool {
         return std.mem.indexOfScalar(usize, self.classes, index) != null;
@@ -66,7 +69,7 @@ const later_options = [_][]const u8{ "namelen", "noclprint", "fmtlibxml" };
 /// Documented MODEL options (p.5031 onward): STAT-HPREG later tickets.
 const later_model_options = [_][]const u8{ "clb", "include", "noint", "orderselect", "start", "stb", "tol", "vif" };
 /// Statements owned by later HPREG / shared HP tickets.
-const later_statements = [_][]const u8{ "selection", "output", "partition", "performance", "code" };
+const later_statements = [_][]const u8{ "selection", "output", "partition", "code" };
 
 fn column(cx: proc.ProcCtx, ds: *const Dataset, t: []const lex.Token, i: usize) diag.Error!usize {
     if (!at(t, i, .name)) return invalid(cx, t, i);
@@ -191,6 +194,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             // p.5029: with several BY statements only the last is used.
             var j = i;
             try bys.read(cx.arena, t, &j);
+        } else if (kw(t, i, "performance")) {
+            // Shared single-machine PERFORMANCE contract (STAT-HP-001).
+            try hp.parsePerformance(cx.diags, "HPREG", t, i, end, &s.performance);
         } else if (kw(t, i, "format")) {
             return gap(cx, t[i].line, "FORMAT statement (formatted CLASS levels) is not implemented", .{});
         } else if (at(t, i, .name) and oneOf(t[i].text, &later_statements)) {
@@ -437,15 +443,10 @@ fn header(cx: proc.ProcCtx, out: *Out, s: Spec) !void {
     const a = cx.arena;
     const ds = s.input.ds;
     try out.appendSlice(a, "\nThe HPREG Procedure\n\n");
-    // opensas computes on one thread, so it reports 1 where the SAS reference
-    // machine reports its own thread count; thread semantics: STAT-HP-002.
-    try out.appendSlice(a, "      Performance Information\n\nExecution Mode       Single-Machine\nNumber of Threads    1             \n\n\n");
-    const dw = @max(4, s.data_name.len);
-    try title(a, out, "Data Access Information", dw + 32, true);
-    try left(a, out, "Data", dw);
-    try out.appendSlice(a, "    Engine    Role     Path\n\n");
-    try left(a, out, s.data_name, dw);
-    try out.appendSlice(a, "    V9        Input    On Client\n\n\n");
+    // Shared single-machine tables (STAT-HP-001): one truthful thread.
+    try hp.performanceInfo(a, out);
+    try hp.dataAccessInfo(a, out, s.data_name);
+    try out.appendSlice(a, "\n\n");
     var lines: std.ArrayList([2][]const u8) = .empty;
     try lines.append(a, .{ "Data Source", s.data_name });
     try lines.append(a, .{ "Dependent Variable", ds.columns.items[s.response].name });
@@ -539,6 +540,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const ds = s.input.ds;
     const slices = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     if (slices.len == 0) return gap(cx, 0, "the result for an empty input data set is not verified", .{});
+    try hp.noteSingleMachine(cx.diags, "HPREG");
     const results = try a.alloc(Analysis, slices.len);
     for (slices, results) |slice, *an| {
         an.* = try analyze(cx, s, slice.rows);

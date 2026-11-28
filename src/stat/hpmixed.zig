@@ -22,6 +22,7 @@
 //!   WARNING: The data set contains invalid or missing data.
 const std = @import("std");
 const proc = @import("../proc.zig");
+const hp = @import("hp_shared.zig");
 const diag = @import("../diag.zig");
 const lex = @import("../lexer.zig");
 const Dataset = @import("../dataset.zig").Dataset;
@@ -286,6 +287,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 s.later_statement = t[i].text;
                 s.later_line = t[i].line;
             }
+        } else if (kw(t, i, "performance")) {
+            // Shared single-machine PERFORMANCE contract (STAT-HP-001).
+            var perf: hp.Performance = .{};
+            try hp.parsePerformance(cx.diags, "HPMIXED", t, i, end, &perf);
         } else if (at(t, i, .name) and oneOf(t[i].text, &later_statements)) {
             return gap(cx, t[i].line, "{s} statement is not implemented", .{t[i].text});
         } else if (kw(t, i, "run") or kw(t, i, "quit")) {

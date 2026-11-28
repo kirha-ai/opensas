@@ -5,7 +5,7 @@ stderr-count 1 the TECHNIQUE option is not implemented
 stderr-count 1 the ITDETAILS option is not implemented
 stderr-count 1 the SELECTION statement is not implemented
 stderr-count 1 the OUTPUT statement is not implemented
-stderr-count 1 the PERFORMANCE statement is not implemented
+stderr-count 1 PERFORMANCE nthreads=2 is not implemented
 stderr-count 1 MODEL statement options are not implemented
 stderr-count 1 interaction, nested and polynomial effects are not implemented
 stderr-count 1 the events/trials response syntax is not implemented

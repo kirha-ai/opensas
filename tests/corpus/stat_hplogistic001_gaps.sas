@@ -29,7 +29,7 @@ proc hplogistic data=two technique=newrap; model y = x; run;
 proc hplogistic data=two itdetails; model y = x; run;
 proc hplogistic data=two; model y = x; selection method=forward; run;
 proc hplogistic data=two; model y = x; output out=o; run;
-proc hplogistic data=two; model y = x; performance nthreads=1; run;
+proc hplogistic data=two; model y = x; performance nthreads=2; run;
 proc hplogistic data=two; model y = x / link=probit; run;
 proc hplogistic data=two; class c; model y = c*x; run;
 proc hplogistic data=two; model y/t = x; run;

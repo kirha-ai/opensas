@@ -125,6 +125,7 @@ test {
     _ = @import("stat/plm.zig");
     _ = @import("stat/phreg.zig");
     _ = @import("stat/lifetest.zig");
+    _ = @import("stat/hp_shared.zig");
     _ = @import("stat/surveyimpute.zig");
     _ = @import("stat/stepdisc.zig");
     _ = @import("stat/hpmixed.zig");

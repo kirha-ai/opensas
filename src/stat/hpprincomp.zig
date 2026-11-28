@@ -12,6 +12,7 @@
 //! example and of invented data (FREQ, WEIGHT, BY, N=, VARDEF=WDF).
 const std = @import("std");
 const proc = @import("../proc.zig");
+const hp = @import("hp_shared.zig");
 const diag = @import("../diag.zig");
 const parser = @import("../parser.zig");
 const lex = @import("../lexer.zig");
@@ -59,7 +60,6 @@ pub const Spec = struct {
     // Statements owned by later tickets (recorded, then a loud gap).
     code: bool = false,
     output: bool = false,
-    performance: bool = false,
 };
 
 fn at(t: []const lex.Token, i: usize, tag: lex.Tag) bool {
@@ -237,7 +237,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (eq(word, "output")) {
             s.output = true;
         } else if (eq(word, "performance")) {
-            s.performance = true;
+            // Shared single-machine PERFORMANCE contract (STAT-HP-001).
+            var perf: hp.Performance = .{};
+            try hp.parsePerformance(cx.diags, "HPPRINCOMP", t, i, end, &perf);
         } else if (eq(word, "where")) {
             // Applied by procInputObs above.
         } else if (eq(word, "format")) {
@@ -589,7 +591,6 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     if (s.output) return gap(cx.diags, l0, "PROC HPPRINCOMP: the OUTPUT statement is not implemented (STAT-HPPRINCOMP-006)", .{});
     if (s.out != null) return gap(cx.diags, l0, "PROC HPPRINCOMP: the OUT= data set is not implemented (STAT-HPPRINCOMP-006)", .{});
     if (s.outstat != null) return gap(cx.diags, l0, "PROC HPPRINCOMP: the OUTSTAT= data set is not implemented (STAT-HPPRINCOMP-006)", .{});
-    if (s.performance) return gap(cx.diags, l0, "PROC HPPRINCOMP: the PERFORMANCE statement is not implemented (STAT-HPPRINCOMP-008, STAT-HP-002)", .{});
     if (s.cov) return gap(cx.diags, l0, "PROC HPPRINCOMP: the COV analysis and its listing are not implemented (STAT-HPPRINCOMP-002)", .{});
     if (s.noint) return gap(cx.diags, l0, "PROC HPPRINCOMP: the NOINT analysis and its listing are not implemented (STAT-HPPRINCOMP-002)", .{});
     if (s.n) |n| if (n == 0 or n > p) return gap(cx.diags, l0, "PROC HPPRINCOMP: N={d} outside 1 to the number of variables is not verified against SAS output (STAT-HPPRINCOMP-002)", .{n});

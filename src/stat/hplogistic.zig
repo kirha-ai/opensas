@@ -14,6 +14,7 @@
 //! options) is a D-009 gap (rc 2) raised before any listing text.
 const std = @import("std");
 const proc = @import("../proc.zig");
+const hp = @import("hp_shared.zig");
 const diag = @import("../diag.zig");
 const lex = @import("../lexer.zig");
 const format = @import("../format.zig");
@@ -204,7 +205,11 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             try bys.read(a, t, &j);
         } else if (kw(t, i, "run") or kw(t, i, "quit") or kw(t, i, "where")) {
             // Step boundaries; WHERE is applied by procInput.
-        } else if (kw(t, i, "selection") or kw(t, i, "output") or kw(t, i, "code") or kw(t, i, "partition") or kw(t, i, "performance") or kw(t, i, "format") or kw(t, i, "label") or kw(t, i, "attrib")) {
+        } else if (kw(t, i, "performance")) {
+            // Shared single-machine PERFORMANCE contract (STAT-HP-001).
+            var perf: hp.Performance = .{};
+            try hp.parsePerformance(cx.diags, "HPLOGISTIC", t, i, end, &perf);
+        } else if (kw(t, i, "selection") or kw(t, i, "output") or kw(t, i, "code") or kw(t, i, "partition") or kw(t, i, "format") or kw(t, i, "label") or kw(t, i, "attrib")) {
             return gap(cx, line, "the {s} statement is not implemented", .{try upper(a, t[i].text)});
         } else return invalid(cx, t, i);
         i = end + 1;

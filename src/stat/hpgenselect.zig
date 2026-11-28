@@ -23,6 +23,7 @@
 //! convergence the two agree far below the printed decimals.
 const std = @import("std");
 const proc = @import("../proc.zig");
+const hp = @import("hp_shared.zig");
 const diag = @import("../diag.zig");
 const parser = @import("../parser.zig");
 const lex = @import("../lexer.zig");
@@ -92,7 +93,7 @@ const later_options = [_][]const u8{
 /// Documented MODEL options other than DISTRIBUTION= and LINK=.
 const later_model_options = [_][]const u8{ "alpha", "cl", "dispersion", "phi", "initialphi", "noint", "offset", "samplefrac", "start", "include", "noinclude" };
 /// Statements owned by later HPGENSELECT / shared HP tickets.
-const later_statements = [_][]const u8{ "selection", "output", "partition", "performance", "code", "restrict", "zeromodel" };
+const later_statements = [_][]const u8{ "selection", "output", "partition", "code", "restrict", "zeromodel" };
 const distributions = [_][]const u8{ "binary", "binomial", "gamma", "inversegaussian", "ig", "multinomial", "mult", "negativebinomial", "nb", "normal", "gaussian", "poisson", "tweedie", "zinb", "zip" };
 const links = [_][]const u8{ "cloglog", "cll", "glogit", "identity", "id", "inverse", "reciprocal", "inverse2", "logit", "loglog", "log", "probit" };
 
@@ -240,6 +241,10 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         } else if (kw(t, i, "by")) {
             var j = i;
             try bys.read(cx.arena, t, &j);
+        } else if (kw(t, i, "performance")) {
+            // Shared single-machine PERFORMANCE contract (STAT-HP-001).
+            var perf: hp.Performance = .{};
+            try hp.parsePerformance(cx.diags, "HPGENSELECT", t, i, end, &perf);
         } else if (kw(t, i, "format")) {
             return gap(cx, t[i].line, "FORMAT statement (formatted CLASS levels) is not implemented", .{});
         } else if (at(t, i, .name) and oneOf(t[i].text, &later_statements)) {
@@ -605,15 +610,9 @@ fn infoTable(a: A, out: *Out, heading: []const u8, lines: []const [2][]const u8)
 fn header(cx: proc.ProcCtx, out: *Out, s: Spec) !void {
     const a = cx.arena;
     try out.appendSlice(a, "\nThe HPGENSELECT Procedure\n\n");
-    // opensas computes on one thread, so it reports 1 where the SAS reference
-    // machine reports its own thread count; thread semantics: STAT-HP-002.
-    try out.appendSlice(a, "      Performance Information\n\nExecution Mode       Single-Machine\nNumber of Threads    1             \n\n\n");
-    const dw = @max(4, s.data_name.len);
-    try title(a, out, "Data Access Information", dw + 32, true);
-    try left(a, out, "Data", dw);
-    try out.appendSlice(a, "    Engine    Role     Path\n\n");
-    try left(a, out, s.data_name, dw);
-    try out.appendSlice(a, "    V9        Input    On Client\n");
+    // Shared single-machine tables (STAT-HP-001): one truthful thread.
+    try hp.performanceInfo(a, out);
+    try hp.dataAccessInfo(a, out, s.data_name);
 }
 
 fn render(cx: proc.ProcCtx, out: *Out, s: Spec, an: Analysis) !void {

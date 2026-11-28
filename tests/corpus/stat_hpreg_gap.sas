@@ -44,7 +44,7 @@ partition fraction(validate=0.3);
 run;
 proc hpreg data=small;
 model y = x1 x2;
-performance nthreads=1;
+performance nthreads=2;
 run;
 proc hpreg data=small namelen=30;
 model y = x1 x2;

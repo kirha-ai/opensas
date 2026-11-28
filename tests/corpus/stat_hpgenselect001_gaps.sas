@@ -31,7 +31,7 @@ proc hpgenselect data=cnt; model y = x / dist=poisson link=identity; run;
 proc hpgenselect data=cnt; model y = x / dist=poisson; selection method=forward; run;
 proc hpgenselect data=cnt; model y = x / dist=poisson; output out=o pred=p; run;
 proc hpgenselect data=cnt; model y = x / dist=poisson; partition fraction(validate=0.3); run;
-proc hpgenselect data=cnt; model y = x / dist=poisson; performance nthreads=1; run;
+proc hpgenselect data=cnt; model y = x / dist=poisson; performance nthreads=2; run;
 proc hpgenselect data=cnt; model y = x / dist=poisson; code file='x.sas'; run;
 proc hpgenselect data=cnt; model y = x / dist=poisson; zeromodel x; run;
 proc hpgenselect data=cnt maxiter=10; model y = x / dist=poisson; run;
