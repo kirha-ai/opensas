@@ -1,0 +1,28 @@
+
+The Multtest Procedure
+
+                       Model Information
+
+Test for discrete variables                 Cochran-Armitage    
+Z-score approximation used                  Everywhere          
+Continuity correction                       0                   
+Tails for discrete tests                    Two-tailed          
+Strata weights                              None                
+P-value adjustment                          Hochberg            
+
+
+                 Contrast Coefficients
+ 
+                                Arm
+ 
+Contrast            HIGH             LOW             MID
+
+Lin                    2               0               1
+
+
+                    p-Values
+ 
+Variable    Contrast           Raw      Hochberg
+
+Ev1         Lin             0.1135        0.1135
+Ev2         Lin             0.0064        0.0128
