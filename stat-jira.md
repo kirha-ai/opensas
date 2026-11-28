@@ -8,11 +8,11 @@ This section is the only current status summary; every section below it is a his
   - dev1: STAT-PLM-002; `/Users/thomas/kirha/opensas-dev1`; branch `stat-b6/plm002-dev1` from the tip that records this assignment.
   - dev2: STAT-GLIMMIX-002 handed back PARK and integrated locally (`b82dbd21`, kernel only, step still a loud gap; final batch verification pending). Slot refilled: STAT-GLIMMIX-003; `/Users/thomas/kirha/opensas-dev2`; branch `stat-b6/glimmix003-dev2`; assigned 2026-11-28T05:13:31+00:00, own deadline 2026-11-28T05:58:31+00:00.
   - dev3: STAT-FREQ-015 handed back as DONE candidate and integrated locally (`ed20f87a`, tests only, no production change; heading stays DOING until the final batch verification and push). Slot refilled: STAT-FREQ-019; `/Users/thomas/kirha/opensas-dev3`; branch `stat-b6/freq019-dev3`; assigned 2026-11-28T05:14:26+00:00, own deadline 2026-11-28T05:59:26+00:00.
-  - dev4: STAT-ANOVA-007; `/Users/thomas/kirha/opensas-dev4`; branch `stat-b6/anova007-dev4` from the tip that records this assignment.
+  - dev4: STAT-ANOVA-007 handed back PARK and integrated locally (`b123294e`; MEANS tables in-step and interactive, TUKEY display still a loud gap; final batch verification pending). Slot refilled: STAT-ANOVA-010; `/Users/thomas/kirha/opensas-dev4`; branch `stat-b6/anova010-dev4`; assigned 2026-11-28T05:16:44+00:00, own deadline 2026-11-28T06:01:44+00:00.
   - dev5: STAT-LIFETEST-002 handed back PARK and integrated locally (`0407ff83`; its original is the same program/expected as LIFETEST-001's and passes 341/341; final batch verification pending). Slot refilled: STAT-COMMON-015; `/Users/thomas/kirha/opensas-dev5`; branch `stat-b6/common015-dev5`; assigned 2026-11-28T05:15:09+00:00, own deadline 2026-11-28T06:00:09+00:00.
-  - dev6: STAT-PHREG-002; `/Users/thomas/kirha/opensas-dev6`; branch `stat-b6/phreg002-dev6` from the tip that records this assignment.
+  - dev6: STAT-PHREG-002 handed back PARK and integrated locally (`9af5aab8`; time-dependent programmed covariates, PHREG-001 page check done; final batch verification pending). Slot refilled: STAT-PHREG-003; `/Users/thomas/kirha/opensas-dev6`; branch `stat-b6/phreg003-dev6`; assigned 2026-11-28T05:16:44+00:00, own deadline 2026-11-28T06:01:44+00:00.
   - dev7: STAT-GENMOD-002; `/Users/thomas/kirha/opensas-dev7`; branch `stat-b6/genmod002-dev7` from the tip that records this assignment.
-- **Counts:** 53 DONE, 69 PARK, 8 DOING (seven live devs plus FREQ-015 awaiting final verification), 1292 TODO.
+- **Counts:** 53 DONE, 71 PARK, 8 DOING (seven live devs plus FREQ-015 awaiting final verification), 1290 TODO.
 - **Working branch:** `feat/stat/batch-4`. Tested and pushed code SHA `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5` (origin moved `0095ed9b`/`bc9eb62d` → `470bdc33`). Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
 - **Integration method:** seven branches `stat-b5/<ticket>-devN` from `bbf110dd`, applied serially by `git cherry-pick` (17 commits) in the order GENMOD-001, PLM-001, GLIMMIX-001, PHREG-001, ANOVA-001, FREQ-014, LIFETEST-001. Two additive conflicts (PHREG in `src/main.zig`/`src/root.zig`, LIFETEST in `src/root.zig`: adjacent registration lines) were resolved by keeping every line of both sides; nothing else was hand-edited.
@@ -1999,7 +1999,7 @@ Source: S154, Chapter 29, `The ANOVA Procedure`, PDF pp. 1105–1162. Tasks in t
 
 <a id="stat-anova-010"></a>
 
-### [TODO] STAT-ANOVA-010 — ANOVA — ODS Graphics
+### [DOING @dev4] STAT-ANOVA-010 — ANOVA — ODS Graphics
 
 - Source: S154 / Chapter 29 / `ODS Graphics` (PDF pp. 1143–1144).
 - Scope: Implement ODS Graphics. Cover all triggering options, content, and naming specified by this section; computational tickets supply numerical values, while other output types are handled separately.
@@ -11011,7 +11011,7 @@ Source: S154, Chapter 92, `The PHREG Procedure`, PDF pp. 7311–7582. Tasks in t
 
 <a id="stat-phreg-003"></a>
 
-### [TODO] STAT-PHREG-003 — PHREG — Time and CLASS Variables Usage / Counting Process Style of Input / Left-Truncation of Failure Times / Caution about Using Survival Data with Left Truncation
+### [DOING @dev6] STAT-PHREG-003 — PHREG — Time and CLASS Variables Usage / Counting Process Style of Input / Left-Truncation of Failure Times / Caution about Using Survival Data with Left Truncation
 
 - Source: S154 / Chapter 92 / `Time and CLASS Variables Usage` (PDF pp. 7392–7396); S154 / Chapter 92 / `Counting Process Style of Input` (PDF pp. 7397–7398); S154 / Chapter 92 / `Left-Truncation of Failure Times` (PDF pp. 7398–7399); S154 / Chapter 92 / `Caution about Using Survival Data with Left Truncation` (PDF pp. 7446–7449).
 - Scope: Implement Time and CLASS Variables Usage; Counting Process Style of Input; Left-Truncation of Failure Times; Caution about Using Survival Data with Left Truncation. Implement the syntax and model semantics allowed by this procedure, using shared effect/parameterization support only for forms documented as supported.
