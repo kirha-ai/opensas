@@ -1,0 +1,637 @@
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+
+                              The Method for Selecting Variables is STEPWISE
+
+Total Sample Size                            158          Variable(s) in the Analysis                    6
+Class Levels                                   7          Variable(s) Will Be Included                   0
+                                                          Significance Level to Enter                 0.15
+                                                          Significance Level to Stay                  0.15
+
+
+Number of Observations Read            159
+Number of Observations Used            158
+
+
+                   Class Level Information
+ 
+             Variable
+Species      Name         Frequency       Weight    Proportion
+
+Bream        Bream               34      34.0000      0.215190
+Parkki       Parkki              11      11.0000      0.069620
+Perch        Perch               56      56.0000      0.354430
+Pike         Pike                17      17.0000      0.107595
+Roach        Roach               20      20.0000      0.126582
+Smelt        Smelt               14      14.0000      0.088608
+Whitefish    Whitefish            6       6.0000      0.037975
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 1
+
+          Statistics for Entry, DF = 6, 151
+ 
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.3750      15.10    <.0001       1.0000
+Length1       0.6017      38.02    <.0001       1.0000
+Length2       0.6098      39.32    <.0001       1.0000
+Length3       0.6280      42.49    <.0001       1.0000
+Height        0.7553      77.69    <.0001       1.0000
+Width         0.4806      23.29    <.0001       1.0000
+
+                    Variable Height will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Height
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.244670      77.69         6       151    <.0001
+Pillai's Trace                               0.755330      77.69         6       151    <.0001
+Average Squared Canonical Correlation        0.125888                                         
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 2
+
+   Statistics for Removal, DF = 6, 151
+ 
+Variable    R-Square    F Value    Pr > F
+
+Height        0.7553      77.69    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 150
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.7388      70.71    <.0001       0.4690
+Length1       0.9220     295.35    <.0001       0.6083
+Length2       0.9229     299.31    <.0001       0.5892
+Length3       0.9173     277.37    <.0001       0.5056
+Width         0.8783     180.44    <.0001       0.3699
+
+                   Variable Length2 will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Length2 Height
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.018861     157.04        12       300    <.0001
+Pillai's Trace                               1.554349      87.78        12       302    <.0001
+Average Squared Canonical Correlation        0.259058                                         
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 3
+
+   Statistics for Removal, DF = 6, 150
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Length2       0.9229     299.31    <.0001
+Height        0.9517     492.27    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 149
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.4743      22.41    <.0001       0.1218
+Length1       0.2894      10.12    <.0001       0.0006
+Length3       0.8826     186.77    <.0001       0.0042
+Width         0.7569      77.34    <.0001       0.1442
+
+                   Variable Length3 will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Length2 Length3 Height
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.002213     180.09        18    421.92    <.0001
+Pillai's Trace                               2.305626      83.56        18       453    <.0001
+Average Squared Canonical Correlation        0.384271                                         
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 4
+
+   Statistics for Removal, DF = 6, 149
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Length2       0.8906     202.13    <.0001
+Length3       0.8826     186.77    <.0001
+Height        0.8726     170.03    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 148
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.4508      20.25    <.0001       0.0039
+Length1       0.2881       9.98    <.0001       0.0005
+Width         0.5775      33.72    <.0001       0.0024
+
+                    Variable Width will be entered.                     
+
+Variable(s) That Have Been Entered
+
+Length2 Length3 Height Width
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.000935     137.66        24    517.52    <.0001
+Pillai's Trace                               2.712044      52.99        24       604    <.0001
+Average Squared Canonical Correlation        0.452007                                         
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 5
+
+   Statistics for Removal, DF = 6, 148
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Length2       0.7770      85.96    <.0001
+Length3       0.7960      96.26    <.0001
+Height        0.7633      79.53    <.0001
+Width         0.5775      33.72    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 147
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.4461      19.73    <.0001       0.0023
+Length1       0.2910      10.06    <.0001       0.0005
+
+                    Variable Weight will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Weight Length2 Length3 Height Width
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.000518     110.70        30       590    <.0001
+Pillai's Trace                               2.969307      36.80        30       755    <.0001
+Average Squared Canonical Correlation        0.494885                                         
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 6
+
+   Statistics for Removal, DF = 6, 147
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Weight        0.4461      19.73    <.0001
+Length2       0.7672      80.76    <.0001
+Length3       0.7954      95.22    <.0001
+Height        0.7508      73.81    <.0001
+Width         0.5739      33.00    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 146
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Length1       0.2987      10.36    <.0001       0.0005
+
+                   Variable Length1 will be entered.                    
+
+                    All variables have been entered.                    
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.000363      90.71        36    643.89    <.0001
+Pillai's Trace                               3.104651      26.99        36       906    <.0001
+Average Squared Canonical Correlation        0.517442                                         
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 7
+
+   Statistics for Removal, DF = 6, 146
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Weight        0.4521      20.08    <.0001
+Length1       0.2987      10.36    <.0001
+Length2       0.5250      26.89    <.0001
+Length3       0.7948      94.25    <.0001
+Height        0.7257      64.37    <.0001
+Width         0.5757      33.02    <.0001
+
+                      No variables can be removed.                      
+
+                     No further steps are possible.                     
+
+Fish Measurement Data
+
+_oracle_by=1
+
+The STEPDISC Procedure
+
+                                               Stepwise Selection Summary
+ 
+                                                                                                      Average
+                                                                                                      Squared
+         Number                           Partial                             Wilks'      Pr <      Canonical      Pr >
+ Step        In    Entered    Removed    R-Square    F Value    Pr > F        Lambda    Lambda    Correlation      ASCC
+
+    1         1    Height                  0.7553      77.69    <.0001    0.24466983    <.0001     0.12588836    <.0001
+    2         2    Length2                 0.9229     299.31    <.0001    0.01886065    <.0001     0.25905822    <.0001
+    3         3    Length3                 0.8826     186.77    <.0001    0.00221342    <.0001     0.38427100    <.0001
+    4         4    Width                   0.5775      33.72    <.0001    0.00093510    <.0001     0.45200732    <.0001
+    5         5    Weight                  0.4461      19.73    <.0001    0.00051794    <.0001     0.49488458    <.0001
+    6         6    Length1                 0.2987      10.36    <.0001    0.00036325    <.0001     0.51744189    <.0001
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+
+                              The Method for Selecting Variables is STEPWISE
+
+Total Sample Size                            158          Variable(s) in the Analysis                    6
+Class Levels                                   7          Variable(s) Will Be Included                   0
+                                                          Significance Level to Enter                 0.15
+                                                          Significance Level to Stay                  0.15
+
+
+Number of Observations Read            159
+Number of Observations Used            158
+
+
+                   Class Level Information
+ 
+             Variable
+Species      Name         Frequency       Weight    Proportion
+
+Bream        Bream               34      34.0000      0.215190
+Parkki       Parkki              11      11.0000      0.069620
+Perch        Perch               56      56.0000      0.354430
+Pike         Pike                17      17.0000      0.107595
+Roach        Roach               20      20.0000      0.126582
+Smelt        Smelt               14      14.0000      0.088608
+Whitefish    Whitefish            6       6.0000      0.037975
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 1
+
+          Statistics for Entry, DF = 6, 151
+ 
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.3750      15.10    <.0001       1.0000
+Length1       0.6017      38.02    <.0001       1.0000
+Length2       0.6098      39.32    <.0001       1.0000
+Length3       0.6280      42.49    <.0001       1.0000
+Height        0.7553      77.69    <.0001       1.0000
+Width         0.4806      23.29    <.0001       1.0000
+
+                    Variable Height will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Height
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.244670      77.69         6       151    <.0001
+Pillai's Trace                               0.755330      77.69         6       151    <.0001
+Average Squared Canonical Correlation        0.125888                                         
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 2
+
+   Statistics for Removal, DF = 6, 151
+ 
+Variable    R-Square    F Value    Pr > F
+
+Height        0.7553      77.69    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 150
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.7388      70.71    <.0001       0.4690
+Length1       0.9220     295.35    <.0001       0.6083
+Length2       0.9229     299.31    <.0001       0.5892
+Length3       0.9173     277.37    <.0001       0.5056
+Width         0.8783     180.44    <.0001       0.3699
+
+                   Variable Length2 will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Length2 Height
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.018861     157.04        12       300    <.0001
+Pillai's Trace                               1.554349      87.78        12       302    <.0001
+Average Squared Canonical Correlation        0.259058                                         
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 3
+
+   Statistics for Removal, DF = 6, 150
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Length2       0.9229     299.31    <.0001
+Height        0.9517     492.27    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 149
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.4743      22.41    <.0001       0.1218
+Length1       0.2894      10.12    <.0001       0.0006
+Length3       0.8826     186.77    <.0001       0.0042
+Width         0.7569      77.34    <.0001       0.1442
+
+                   Variable Length3 will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Length2 Length3 Height
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.002213     180.09        18    421.92    <.0001
+Pillai's Trace                               2.305626      83.56        18       453    <.0001
+Average Squared Canonical Correlation        0.384271                                         
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 4
+
+   Statistics for Removal, DF = 6, 149
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Length2       0.8906     202.13    <.0001
+Length3       0.8826     186.77    <.0001
+Height        0.8726     170.03    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 148
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.4508      20.25    <.0001       0.0039
+Length1       0.2881       9.98    <.0001       0.0005
+Width         0.5775      33.72    <.0001       0.0024
+
+                    Variable Width will be entered.                     
+
+Variable(s) That Have Been Entered
+
+Length2 Length3 Height Width
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.000935     137.66        24    517.52    <.0001
+Pillai's Trace                               2.712044      52.99        24       604    <.0001
+Average Squared Canonical Correlation        0.452007                                         
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 5
+
+   Statistics for Removal, DF = 6, 148
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Length2       0.7770      85.96    <.0001
+Length3       0.7960      96.26    <.0001
+Height        0.7633      79.53    <.0001
+Width         0.5775      33.72    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 147
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.4461      19.73    <.0001       0.0023
+Length1       0.2910      10.06    <.0001       0.0005
+
+                    Variable Weight will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Weight Length2 Length3 Height Width
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.000518     110.70        30       590    <.0001
+Pillai's Trace                               2.969307      36.80        30       755    <.0001
+Average Squared Canonical Correlation        0.494885                                         
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 6
+
+   Statistics for Removal, DF = 6, 147
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Weight        0.4461      19.73    <.0001
+Length2       0.7672      80.76    <.0001
+Length3       0.7954      95.22    <.0001
+Height        0.7508      73.81    <.0001
+Width         0.5739      33.00    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 146
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Length1       0.2987      10.36    <.0001       0.0005
+
+                   Variable Length1 will be entered.                    
+
+                    All variables have been entered.                    
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.000363      90.71        36    643.89    <.0001
+Pillai's Trace                               3.104651      26.99        36       906    <.0001
+Average Squared Canonical Correlation        0.517442                                         
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 7
+
+   Statistics for Removal, DF = 6, 146
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Weight        0.4521      20.08    <.0001
+Length1       0.2987      10.36    <.0001
+Length2       0.5250      26.89    <.0001
+Length3       0.7948      94.25    <.0001
+Height        0.7257      64.37    <.0001
+Width         0.5757      33.02    <.0001
+
+                      No variables can be removed.                      
+
+                     No further steps are possible.                     
+
+Fish Measurement Data
+
+_oracle_by=2
+
+The STEPDISC Procedure
+
+                                               Stepwise Selection Summary
+ 
+                                                                                                      Average
+                                                                                                      Squared
+         Number                           Partial                             Wilks'      Pr <      Canonical      Pr >
+ Step        In    Entered    Removed    R-Square    F Value    Pr > F        Lambda    Lambda    Correlation      ASCC
+
+    1         1    Height                  0.7553      77.69    <.0001    0.24466983    <.0001     0.12588836    <.0001
+    2         2    Length2                 0.9229     299.31    <.0001    0.01886065    <.0001     0.25905822    <.0001
+    3         3    Length3                 0.8826     186.77    <.0001    0.00221342    <.0001     0.38427100    <.0001
+    4         4    Width                   0.5775      33.72    <.0001    0.00093510    <.0001     0.45200732    <.0001
+    5         5    Weight                  0.4461      19.73    <.0001    0.00051794    <.0001     0.49488458    <.0001
+    6         6    Length1                 0.2987      10.36    <.0001    0.00036325    <.0001     0.51744189    <.0001

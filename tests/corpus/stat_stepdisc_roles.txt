@@ -1,0 +1,608 @@
+Q1
+
+The STEPDISC Procedure
+
+                              The Method for Selecting Variables is STEPWISE
+
+Total Sample Size                            158          Variable(s) in the Analysis                    4
+Class Levels                                   7          Variable(s) Will Be Included                   0
+                                                          Significance Level to Enter                  0.6
+                                                          Significance Level to Stay                   0.4
+
+
+Number of Observations Read            159
+Number of Observations Used            158
+
+
+                   Class Level Information
+ 
+             Variable
+Species      Name         Frequency       Weight    Proportion
+
+Bream        Bream               34      34.0000      0.215190
+Parkki       Parkki              11      11.0000      0.069620
+Perch        Perch               56      56.0000      0.354430
+Pike         Pike                17      17.0000      0.107595
+Roach        Roach               20      20.0000      0.126582
+Smelt        Smelt               14      14.0000      0.088608
+Whitefish    Whitefish            6       6.0000      0.037975
+
+Q1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 1
+
+          Statistics for Entry, DF = 6, 151
+ 
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.3750      15.10    <.0001       1.0000
+Width         0.4806      23.29    <.0001       1.0000
+noise         0.0009       0.02    0.9999       1.0000
+noise2        0.0046       0.12    0.9944       1.0000
+
+                    Variable Width will be entered.                     
+
+Variable(s) That Have Been Entered
+
+Width
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.519353      23.29         6       151    <.0001
+Pillai's Trace                               0.480647      23.29         6       151    <.0001
+Average Squared Canonical Correlation        0.080108                                         
+
+Q1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 2
+
+   Statistics for Removal, DF = 6, 151
+ 
+Variable    R-Square    F Value    Pr > F
+
+Width         0.4806      23.29    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 150
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Weight        0.4399      19.64    <.0001       0.2125
+noise         0.0022       0.06    0.9993       0.9996
+noise2        0.0047       0.12    0.9943       0.9999
+
+                    Variable Weight will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Weight Width
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.290887      21.35        12       300    <.0001
+Pillai's Trace                               0.896283      20.44        12       302    <.0001
+Average Squared Canonical Correlation        0.149380                                         
+
+Q1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 3
+
+   Statistics for Removal, DF = 6, 150
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Weight        0.4399      19.64    <.0001
+Width         0.5346      28.72    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 149
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+noise         0.0025       0.06    0.9990       0.2125
+noise2        0.0050       0.12    0.9933       0.2120
+
+                      No variables can be entered.                      
+
+                     No further steps are possible.                     
+
+Q1
+
+The STEPDISC Procedure
+
+                                               Stepwise Selection Summary
+ 
+                                                                                                      Average
+                                                                                                      Squared
+         Number                           Partial                             Wilks'      Pr <      Canonical      Pr >
+ Step        In    Entered    Removed    R-Square    F Value    Pr > F        Lambda    Lambda    Correlation      ASCC
+
+    1         1    Width                   0.4806      23.29    <.0001    0.51935323    <.0001     0.08010779    <.0001
+    2         2    Weight                  0.4399      19.64    <.0001    0.29088691    <.0001     0.14938049    <.0001
+Q2
+
+The STEPDISC Procedure
+
+                              The Method for Selecting Variables is STEPWISE
+
+Total Sample Size                             16          Variable(s) in the Analysis                    3
+Class Levels                                   3          Variable(s) Will Be Included                   0
+                                                          Significance Level to Enter                 0.15
+                                                          Significance Level to Stay                  0.15
+
+
+Number of Observations Read             15
+Number of Observations Used             11
+Sum of Frequencies Read               18.7
+Sum of Frequencies Used                 16
+Sum of Weights Read                   18.5
+Sum of Weights Used                     17
+
+
+                  Class Level Information
+ 
+          Variable
+     g    Name        Frequency       Weight    Proportion
+
+     1    1                   5       4.5000      0.312500
+     2    2                   5       6.0000      0.312500
+     3    3                   6       6.5000      0.375000
+
+Q2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 1
+
+           Statistics for Entry, DF = 2, 13
+ 
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+x1            0.9161      70.96    <.0001       1.0000
+x2            0.8515      37.26    <.0001       1.0000
+x3            0.8245      30.54    <.0001       1.0000
+
+                      Variable x1 will be entered.                      
+
+Variable(s) That Have Been Entered
+
+x1
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.083918      70.96         2        13    <.0001
+Pillai's Trace                               0.916082      70.96         2        13    <.0001
+Average Squared Canonical Correlation        0.458041                                         
+
+Q2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 2
+
+   Statistics for Removal, DF = 2, 13
+ 
+Variable    R-Square    F Value    Pr > F
+
+x1            0.9161      70.96    <.0001
+
+                      No variables can be removed.                      
+
+
+           Statistics for Entry, DF = 2, 12
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+x2            0.8840      45.74    <.0001       0.9265
+x3            0.9435     100.10    <.0001       0.9902
+
+                      Variable x3 will be entered.                      
+
+Variable(s) That Have Been Entered
+
+x1 x3
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.004745      81.10         4        24    <.0001
+Pillai's Trace                               1.758073      47.24         4        26    <.0001
+Average Squared Canonical Correlation        0.879036                                         
+
+Q2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 3
+
+   Statistics for Removal, DF = 2, 12
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+x1            0.9730     215.89    <.0001
+x3            0.9435     100.10    <.0001
+
+                      No variables can be removed.                      
+
+
+           Statistics for Entry, DF = 2, 11
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+x2            0.0056       0.03    0.9695       0.0618
+
+                      No variables can be entered.                      
+
+                     No further steps are possible.                     
+
+Q2
+
+The STEPDISC Procedure
+
+                                               Stepwise Selection Summary
+ 
+                                                                                                      Average
+                                                                                                      Squared
+         Number                           Partial                             Wilks'      Pr <      Canonical      Pr >
+ Step        In    Entered    Removed    R-Square    F Value    Pr > F        Lambda    Lambda    Correlation      ASCC
+
+    1         1    x1                      0.9161      70.96    <.0001    0.08391794    <.0001     0.45804103    <.0001
+    2         2    x3                      0.9435     100.10    <.0001    0.00474541    <.0001     0.87903626    <.0001
+Q3
+
+The STEPDISC Procedure
+
+                              The Method for Selecting Variables is STEPWISE
+
+Total Sample Size                            159          Variable(s) in the Analysis                    2
+Class Levels                                   7          Variable(s) Will Be Included                   0
+                                                          Significance Level to Enter                 0.15
+                                                          Significance Level to Stay                  0.15
+
+
+Number of Observations Read            159
+Number of Observations Used            159
+
+
+                   Class Level Information
+ 
+             Variable
+Species      Name         Frequency       Weight    Proportion
+
+Bream        Bream               35      35.0000      0.220126
+Parkki       Parkki              11      11.0000      0.069182
+Perch        Perch               56      56.0000      0.352201
+Pike         Pike                17      17.0000      0.106918
+Roach        Roach               20      20.0000      0.125786
+Smelt        Smelt               14      14.0000      0.088050
+Whitefish    Whitefish            6       6.0000      0.037736
+
+Q3
+
+The STEPDISC Procedure
+
+                                               Stepwise Selection Summary
+ 
+                                                                                                      Average
+                                                                                                      Squared
+         Number                           Partial                             Wilks'      Pr <      Canonical      Pr >
+ Step        In    Entered    Removed    R-Square    F Value    Pr > F        Lambda    Lambda    Correlation      ASCC
+
+    1         1    Height                  0.7568      78.85    <.0001    0.24317051    <.0001     0.12613825    <.0001
+    2         2    Width                   0.8782     181.39    <.0001    0.02962695    <.0001     0.23279761    <.0001
+Q4
+
+The STEPDISC Procedure
+
+                              The Method for Selecting Variables is STEPWISE
+
+Total Sample Size                            159          Variable(s) in the Analysis                    3
+Class Levels                                   7          Variable(s) Will Be Included                   0
+                                                          Significance Level to Enter                 0.05
+                                                          Significance Level to Stay                  0.05
+
+
+Number of Observations Read            159
+Number of Observations Used            159
+
+
+                   Class Level Information
+ 
+             Variable
+Species      Name         Frequency       Weight    Proportion
+
+Bream        Bream               35      35.0000      0.220126
+Parkki       Parkki              11      11.0000      0.069182
+Perch        Perch               56      56.0000      0.352201
+Pike         Pike                17      17.0000      0.106918
+Roach        Roach               20      20.0000      0.125786
+Smelt        Smelt               14      14.0000      0.088050
+Whitefish    Whitefish            6       6.0000      0.037736
+
+Q4
+
+The STEPDISC Procedure
+Stepwise Selection: Step 1
+
+          Statistics for Entry, DF = 6, 152
+ 
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+noise         0.0004       0.01    1.0000       1.0000
+noise2        0.0044       0.11    0.9950       1.0000
+Height        0.7568      78.85    <.0001       1.0000
+
+                    Variable Height will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Height
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.243171      78.85         6       152    <.0001
+Pillai's Trace                               0.756829      78.85         6       152    <.0001
+Average Squared Canonical Correlation        0.126138                                         
+
+Q4
+
+The STEPDISC Procedure
+Stepwise Selection: Step 2
+
+   Statistics for Removal, DF = 6, 152
+ 
+Variable    R-Square    F Value    Pr > F
+
+Height        0.7568      78.85    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 151
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+noise         0.0016       0.04    0.9997       0.9999
+noise2        0.0044       0.11    0.9949       0.9997
+
+                      No variables can be entered.                      
+
+                     No further steps are possible.                     
+
+Q4
+
+The STEPDISC Procedure
+
+                                               Stepwise Selection Summary
+ 
+                                                                                                      Average
+                                                                                                      Squared
+         Number                           Partial                             Wilks'      Pr <      Canonical      Pr >
+ Step        In    Entered    Removed    R-Square    F Value    Pr > F        Lambda    Lambda    Correlation      ASCC
+
+    1         1    Height                  0.7568      78.85    <.0001    0.24317051    <.0001     0.12613825    <.0001
+R1
+
+The STEPDISC Procedure
+
+                              The Method for Selecting Variables is STEPWISE
+
+Total Sample Size                            159          Variable(s) in the Analysis                    2
+Class Levels                                   7          Variable(s) Will Be Included                   0
+                                                          Significance Level to Enter                  0.3
+                                                          Significance Level to Stay                   0.3
+
+
+Number of Observations Read            159
+Number of Observations Used            159
+
+
+                   Class Level Information
+ 
+             Variable
+Species      Name         Frequency       Weight    Proportion
+
+Bream        Bream               35      35.0000      0.220126
+Parkki       Parkki              11      11.0000      0.069182
+Perch        Perch               56      56.0000      0.352201
+Pike         Pike                17      17.0000      0.106918
+Roach        Roach               20      20.0000      0.125786
+Smelt        Smelt               14      14.0000      0.088050
+Whitefish    Whitefish            6       6.0000      0.037736
+
+R1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 1
+
+          Statistics for Entry, DF = 6, 152
+ 
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Height        0.7568      78.85    <.0001       1.0000
+Width         0.4809      23.47    <.0001       1.0000
+
+                    Variable Height will be entered.                    
+
+Variable(s) That Have Been Entered
+
+Height
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.243171      78.85         6       152    <.0001
+Pillai's Trace                               0.756829      78.85         6       152    <.0001
+Average Squared Canonical Correlation        0.126138                                         
+
+R1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 2
+
+   Statistics for Removal, DF = 6, 152
+ 
+Variable    R-Square    F Value    Pr > F
+
+Height        0.7568      78.85    <.0001
+
+                      No variables can be removed.                      
+
+
+          Statistics for Entry, DF = 6, 151
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+Width         0.8782     181.39    <.0001       0.3713
+
+                    Variable Width will be entered.                     
+
+                    All variables have been entered.                    
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.029627     121.05        12       302    <.0001
+Pillai's Trace                               1.396786      58.66        12       304    <.0001
+Average Squared Canonical Correlation        0.232798                                         
+
+R1
+
+The STEPDISC Procedure
+Stepwise Selection: Step 3
+
+   Statistics for Removal, DF = 6, 151
+ 
+             Partial
+Variable    R-Square    F Value    Pr > F
+
+Height        0.9429     415.82    <.0001
+Width         0.8782     181.39    <.0001
+
+                      No variables can be removed.                      
+
+                     No further steps are possible.                     
+
+R1
+
+The STEPDISC Procedure
+
+                                               Stepwise Selection Summary
+ 
+                                                                                                      Average
+                                                                                                      Squared
+         Number                           Partial                             Wilks'      Pr <      Canonical      Pr >
+ Step        In    Entered    Removed    R-Square    F Value    Pr > F        Lambda    Lambda    Correlation      ASCC
+
+    1         1    Height                  0.7568      78.85    <.0001    0.24317051    <.0001     0.12613825    <.0001
+    2         2    Width                   0.8782     181.39    <.0001    0.02962695    <.0001     0.23279761    <.0001
+R2
+
+The STEPDISC Procedure
+
+                              The Method for Selecting Variables is STEPWISE
+
+Total Sample Size                             12          Variable(s) in the Analysis                    2
+Class Levels                                   3          Variable(s) Will Be Included                   0
+                                                          Significance Level to Enter                    1
+                                                          Significance Level to Stay                     0
+
+
+Number of Observations Read             12
+Number of Observations Used             12
+
+
+                  Class Level Information
+ 
+          Variable
+     g    Name        Frequency       Weight    Proportion
+
+     1    1                   4       4.0000      0.333333
+     2    2                   4       4.0000      0.333333
+     3    3                   4       4.0000      0.333333
+
+R2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 1
+
+           Statistics for Entry, DF = 2, 9
+ 
+Variable    R-Square    F Value    Pr > F    Tolerance
+
+y1            0.9357      65.44    <.0001       1.0000
+y2            0.7115      11.10    0.0037       1.0000
+
+                      Variable y1 will be entered.                      
+
+Variable(s) That Have Been Entered
+
+y1
+
+
+                                   Multivariate Statistics
+ 
+Statistic                                       Value    F Value    Num DF    Den DF    Pr > F
+
+Wilks' Lambda                                0.064337      65.44         2         9    <.0001
+Pillai's Trace                               0.935663      65.44         2         9    <.0001
+Average Squared Canonical Correlation        0.467832                                         
+
+R2
+
+The STEPDISC Procedure
+Stepwise Selection: Step 2
+
+    Statistics for Removal, DF = 2, 9
+ 
+Variable    R-Square    F Value    Pr > F
+
+y1            0.9357      65.44    <.0001
+
+                      Variable y1 will be removed.                      
+
+                     No further steps are possible.                     
+
+R2
+
+The STEPDISC Procedure
+
+                                               Stepwise Selection Summary
+ 
+                                                                                                      Average
+                                                                                                      Squared
+         Number                           Partial                             Wilks'      Pr <      Canonical      Pr >
+ Step        In    Entered    Removed    R-Square    F Value    Pr > F        Lambda    Lambda    Correlation      ASCC
+
+    1         1    y1                      0.9357      65.44    <.0001    0.06433678    <.0001     0.46783161    <.0001
+    2         0               y1           0.9357      65.44    <.0001                                                 

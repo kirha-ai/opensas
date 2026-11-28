@@ -1,0 +1,10 @@
+# corpus assertions
+empty-listing
+stderr-count 1 METHOD=forward is not implemented
+stderr-count 1 METHOD=bw is not implemented
+stderr-count 1 the INCLUDE option is not implemented
+stderr-count 1 the PR2ENTRY option is not implemented
+stderr-count 1 the SIMPLE option is not implemented
+stderr-count 1 input data sets with a _TYPE_ variable
+stderr-count 1 stopping at MAXSTEP= before the selection ends is not verified
+stderr-count 1 an empty input data set
