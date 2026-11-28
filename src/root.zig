@@ -33,6 +33,7 @@ pub const phreg = @import("stat/phreg.zig");
 pub const lifetest = @import("stat/lifetest.zig");
 pub const factor = @import("stat/factor.zig");
 pub const surveylogistic = @import("stat/surveylogistic.zig");
+pub const gee = @import("stat/gee.zig");
 pub const nlin = @import("stat/nlin.zig");
 pub const princomp = @import("stat/princomp.zig");
 pub const surveyfreq = @import("stat/surveyfreq.zig");
@@ -87,6 +88,7 @@ test {
     _ = @import("stat/lifetest.zig");
     _ = @import("stat/factor.zig");
     _ = @import("stat/surveylogistic.zig");
+    _ = @import("stat/gee.zig");
     _ = @import("stat/nlin.zig");
     _ = @import("stat/princomp.zig");
     _ = @import("stat/surveyfreq.zig");
