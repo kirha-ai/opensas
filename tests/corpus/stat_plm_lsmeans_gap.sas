@@ -1,6 +1,8 @@
 /* STAT-PLM-002: expect-rc: 2
- * The LSMEANS / LSMESTIMATE / SLICE steps of the PLM Getting Started example
- * are not implemented: the step must fail loudly (D-009 gap) and print
+ * STAT-PLM-007 implemented LSMEANS, one-sided LSMESTIMATE and SLICE; the
+ * joint FTEST of the PLM Getting Started LSMESTIMATE step is still not
+ * implemented (with UPPERTAILED its chi-bar-square p-value is simulated from
+ * the SEED= stream): the step must fail loudly (D-009 gap) and print
  * nothing, even though SHOW and TEST in the same step are supported.
  * Invented data. */
 data cells;
