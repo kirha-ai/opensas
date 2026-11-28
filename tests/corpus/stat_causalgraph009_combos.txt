@@ -1,0 +1,390 @@
+D01
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+ 
+                       N    Variables
+
+Measured               3    X Y Z    
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+A               3           3             1           1           3             0
+Z               2           2             1           1           2             0
+D01
+
+The CAUSALGRAPH Procedure
+
+    Directed Cycles for A
+ 
+   Cycle        Step    Node
+
+       1           0    X   
+                   1    Y   
+                   2    Z   
+                   3    X   
+D01
+
+The CAUSALGRAPH Procedure
+
+    Directed Cycles for Z
+ 
+   Cycle        Step    Node
+
+       1           0    X   
+                   1    Y   
+                   2    X   
+D04
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+ 
+                       N    Variables
+
+Measured               4    A B X Y  
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+D               4           2             1           1           4             0
+C               2           2             1           1           2             0
+D04
+
+The CAUSALGRAPH Procedure
+
+        Connected Components for D
+ 
+                         -----Nodes------
+Component        Size    A    B    X    Y
+
+        1           2    *    *          
+        2           2              *    *
+D04
+
+The CAUSALGRAPH Procedure
+
+    Directed Cycles for C
+ 
+   Cycle        Step    Node
+
+       1           0    X   
+                   1    Y   
+                   2    X   
+D05
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+ 
+                       N    Variables
+
+Measured               4    A B X Y  
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+C               2           2             1           1           2             0
+D               4           2             1           1           4             0
+D05
+
+The CAUSALGRAPH Procedure
+
+    Directed Cycles for C
+ 
+   Cycle        Step    Node
+
+       1           0    X   
+                   1    Y   
+                   2    X   
+D05
+
+The CAUSALGRAPH Procedure
+
+        Connected Components for D
+ 
+                         -----Nodes------
+Component        Size    A    B    X    Y
+
+        1           2    *    *          
+        2           2              *    *
+D06
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+ 
+                       N    Variables
+
+Measured               5    A B X Y Z
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+E               4           3             1           1           4             0
+F               3           3             1           1           3             0
+D06
+
+The CAUSALGRAPH Procedure
+
+        Connected Components for E
+ 
+                         -----Nodes------
+Component        Size    A    B    X    Y
+
+        1           2    *    *          
+        2           2              *    *
+
+
+    Directed Cycles for E
+ 
+   Cycle        Step    Node
+
+       1           0    A   
+                   1    B   
+                   2    A   
+D07
+
+The CAUSALGRAPH Procedure
+
+         Variables in Models
+ 
+                       N    Variables
+
+Measured               5    A B W X Y
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+E               4           3             1           1           4             0
+G               3           3             1           1           3             0
+D07
+
+The CAUSALGRAPH Procedure
+
+        Connected Components for E
+ 
+                         -----Nodes------
+Component        Size    A    B    X    Y
+
+        1           2    *    *          
+        2           2              *    *
+
+
+    Directed Cycles for E
+ 
+   Cycle        Step    Node
+
+       1           0    A   
+                   1    B   
+                   2    A   
+D07
+
+The CAUSALGRAPH Procedure
+
+    Directed Cycles for G
+ 
+   Cycle        Step    Node
+
+       1           0    W   
+                   1    X   
+                   2    Y   
+                   3    W   
+D09
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               3    X Y Z    
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+T               3           4             1           1           3             0
+D09
+
+The CAUSALGRAPH Procedure
+
+    Directed Cycles for T
+ 
+   Cycle        Step    Node
+
+       1           0    X   
+                   1    Y   
+                   2    Z   
+                   3    X   
+D10
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               3    X Y Z    
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+I               3           3             1           1           3             0
+D10
+
+The CAUSALGRAPH Procedure
+
+    Directed Cycles for I
+ 
+   Cycle        Step    Node
+
+       1           0    X   
+                   1    Y   
+                   2    Z   
+                   3    X   
+D12
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               2    X Y      
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+NL              2           2             1           1           2             0
+D12
+
+The CAUSALGRAPH Procedure
+
+   Directed Cycles for NL
+ 
+   Cycle        Step    Node
+
+       1           0    X   
+                   1    Y   
+                   2    X   
+D13
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               3    X Y Z    
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+NI              3           3             0           0           3             0
+D13
+
+The CAUSALGRAPH Procedure
+
+   Directed Cycles for NI
+ 
+   Cycle        Step    Node
+
+       1           0    X   
+                   1    Y   
+                   2    X   
+D14
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               4    A B X Y  
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+DD              4           3             1           1           4             0
+D14
+
+The CAUSALGRAPH Procedure
+
+       Connected Components for DD
+ 
+                         -----Nodes------
+Component        Size    A    B    X    Y
+
+        1           2    *    *          
+        2           2              *    *
+
+
+   Directed Cycles for DD
+ 
+   Cycle        Step    Node
+
+       1           0    A   
+                   1    B   
+                   2    A   
+D15
+
+The CAUSALGRAPH Procedure
+
+         Variables in Model
+ 
+                       N    Variables
+
+Measured               4    W X Y Z  
+Unmeasured             0             
+
+
+                             Graphical Model Summary
+ 
+Model       Nodes       Edges    Treatments    Outcomes    Measured    Unmeasured
+
+Big             4           5             1           1           4             0
+D15
+
+The CAUSALGRAPH Procedure
+
+   Directed Cycles for Big
+ 
+   Cycle        Step    Node
+
+       1           0    W   
+                   1    Z   
+                   2    X   
+                   3    Y   
+                   4    W   

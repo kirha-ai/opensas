@@ -568,6 +568,7 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
         if (contains(s.unmeasured, z)) return user(cx, line, "The adjustment variable {s} must be observed.", .{s.names[z]});
     }
     if ((s.opts.list orelse false) and !s.identify) return user(cx, 0, "The LIST option requires an IDENTIFY statement.", .{});
+    var cyclic = false;
     for (s.models) |m| {
         if (s.identify) {
             var tr = false;
@@ -577,12 +578,26 @@ pub fn validate(cx: proc.ProcCtx, s: Spec) diag.Error!void {
                 if (contains(s.outcomes, n)) oc = true;
             }
             if (!tr) return user(cx, m.line, "The model {s} must contain at least one treatment variable.", .{m.label});
-            if (!oc) return user(cx, m.line, "The model {s} must contain at least one outcome variable.", .{m.label});
+            if (!oc) {
+                // SAS 9.4 reference run (STAT-CAUSALGRAPH-009): an outcome
+                // of another model is first warned about for this one.
+                for (s.outcomes) |y| {
+                    var elsewhere = false;
+                    for (s.models) |o| if (contains(o.nodes, y)) {
+                        elsewhere = true;
+                    };
+                    if (elsewhere) try cx.diags.warn(s.identify_line, "The outcome variable {s} is not found in the model {s}.", .{ s.names[y], m.label });
+                }
+                return user(cx, m.line, "The model {s} must contain at least one outcome variable.", .{m.label});
+            }
         }
-        if (try hasCycle(cx.arena, s.names.len, m.edges)) return user(cx, m.line, "The model {s} contains at least 1 directed cycle.", .{m.label});
-        // ponytail: the reference run also prints the DirectedCycles table
-        // before this error; only the error is produced here.
+        // A directed cycle (p.2329: the models must be DAGs) is reported by
+        // `run` after the VariableInfo, summary and DirectedCycles tables
+        // (STAT-CAUSALGRAPH-009); it pre-empts the TESTID and METHOD=IV
+        // checks below.
+        if (try hasCycle(cx.arena, s.names.len, m.edges)) cyclic = true;
     }
+    if (cyclic) return;
     // Disconnected models: VariableInfo, summary, every ConnectedComponents
     // table, then (DISCONNECTED) every AdjustList (SAS 9.4 reference runs).
     // TESTID (pp.2319-2320); message texts from SAS 9.4 reference runs.
@@ -655,6 +670,66 @@ fn hasCycle(a: A, n: usize, edges: []const Edge) !bool {
         };
     }
     return seen < n;
+}
+
+/// The cycle SAS prints first for a model (DirectedCycles table; SAS 9.4
+/// reference runs of 16 invented graphs, STAT-CAUSALGRAPH-009): it starts at
+/// the alphabetically first node that lies on a directed cycle and follows
+/// the alphabetically first successor that still leads back to that node.
+/// Returns the closed walk (start repeated at the end), or null for a DAG.
+pub fn firstCycle(a: A, names: []const []const u8, m: Model) !?[]const usize {
+    const sorted = try a.dupe(usize, m.nodes);
+    sortedIds(names, sorted);
+    const seen = try a.alloc(bool, names.len);
+    for (sorted) |start| {
+        @memset(seen, false);
+        var path: std.ArrayList(usize) = .empty;
+        if (try cycleFrom(a, names, m, sorted, start, start, seen, &path)) {
+            try path.append(a, start);
+            return path.items;
+        }
+    }
+    return null;
+}
+
+fn cycleFrom(a: A, names: []const []const u8, m: Model, sorted: []const usize, start: usize, v: usize, seen: []bool, path: *std.ArrayList(usize)) !bool {
+    seen[v] = true;
+    try path.append(a, v);
+    // Successors in alphabetical order; a node already explored cannot
+    // reach `start` (its branch would have succeeded), so pruning is safe.
+    for (sorted) |w| {
+        var edge = false;
+        for (m.edges) |e| if (!e.bi and e.from == v and e.to == w) {
+            edge = true;
+        };
+        if (!edge) continue;
+        if (w == start) return true;
+        if (seen[w]) continue;
+        if (try cycleFrom(a, names, m, sorted, start, w, seen, path)) return true;
+    }
+    _ = path.pop();
+    return false;
+}
+
+fn cyclesTable(a: A, out: *Out, names: []const []const u8, m: Model, cyc: []const usize) !void {
+    const rows = cyc.len;
+    const cn = try a.alloc([]const u8, rows);
+    const st = try a.alloc([]const u8, rows);
+    const nd = try a.alloc([]const u8, rows);
+    var w: usize = 4;
+    for (cyc, 0..) |v, r| {
+        cn[r] = if (r == 0) "1" else "";
+        st[r] = try num(a, r);
+        nd[r] = names[v];
+        w = @max(w, names[v].len);
+    }
+    const cols = [_]Col{
+        .{ .head = &.{"Cycle"}, .al = .right, .width = 8, .cells = cn },
+        .{ .head = &.{"Step"}, .al = .right, .width = 8, .cells = st },
+        .{ .head = &.{"Node"}, .al = .left, .width = w, .cells = nd },
+    };
+    const title = try std.fmt.allocPrint(a, "Directed Cycles for {s}", .{m.label});
+    try table(a, out, &.{title}, 1, &cols, try uniformGaps(a, cols.len), null);
 }
 
 fn components(a: A, n: usize, m: Model) !usize {
@@ -972,6 +1047,15 @@ fn sortedIds(names: []const []const u8, ids: []usize) void {
 }
 
 pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
+    var keep = false;
+    return runKeeping(cx, out, t, &keep);
+}
+
+/// `run`, setting `keep` when the step fails after printing tables SAS also
+/// prints before its error (the directed-cycle error, p.2329): the caller
+/// then keeps the listing written so far. Every other failure leaves `keep`
+/// false and the listing is dropped.
+pub fn runKeeping(cx: proc.ProcCtx, out: *Out, t: []const lex.Token, keep: *bool) diag.Error!void {
     const a = cx.arena;
     var s = try parse(cx, t);
     try validate(cx, s);
@@ -985,6 +1069,13 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             }
         }.f);
         s.models = ms;
+    }
+    // Directed cycles (p.2329), per model in listing order.
+    const cycles = try a.alloc(?[]const usize, s.models.len);
+    var any_cycle = false;
+    for (s.models, cycles) |m, *c| {
+        c.* = try firstCycle(a, s.names, m);
+        if (c.* != null) any_cycle = true;
     }
     const n = s.names.len;
     // LIST is the default with IDENTIFY and no TESTID (p.2300).
@@ -1008,7 +1099,7 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     const sets = try a.alloc([]Set, s.models.len);
     @memset(sets, &.{});
     for (measured.items) |v| if (!contains(s.treatments, v) and !contains(s.outcomes, v)) try cands.append(a, v);
-    if (list and !iv) {
+    if (list and !iv and !any_cycle) {
         if (cands.items.len > max_candidates) return gap(cx, s.models[0].line, "more than {d} measured covariates (exhaustive adjustment-set enumeration) is not implemented", .{max_candidates});
         for (s.models, sets) |m, *dst| {
             var mc: std.ArrayList(usize) = .empty;
@@ -1047,6 +1138,17 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
             }
             dst.* = local;
         }
+    }
+    if (any_cycle and (s.opts.noprint or s.opts.psummary)) {
+        // SAS 9.4 reference runs: NOPRINT and PSUMMARY (with or without
+        // LIST) print nothing; the log keeps model order, a disconnected
+        // warning and a cycle error per model.
+        for (s.models, cycles) |m, c| {
+            const cc = try componentIds(a, s.names, m);
+            if (cc.count > 1 and !s.opts.disconnected) try cx.diags.warn(m.line, "The model {s} contains {d} disconnected DAGs.", .{ m.label, cc.count });
+            if (c != null) try cycleError(cx, m);
+        }
+        return error.ParseError;
     }
     if (s.opts.noprint) {
         for (s.models) |m| {
@@ -1132,6 +1234,32 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
     }
     // ConnectedComponents (reference runs): without the DISCONNECTED option
     // a disconnected model is warned about and no model gets an AdjustList.
+    if (any_cycle) {
+        // SAS 9.4 reference runs (ORDERMODELS order applies): per model, a
+        // disconnected one gets its ConnectedComponents page, and a cyclic
+        // one its DirectedCycles table (on that same page, else a new one)
+        // and its error; no TESTID or adjustment table follows.
+        for (s.models, cycles) |m, c| {
+            const cc = try componentIds(a, s.names, m);
+            if (cc.count > 1) {
+                if (!s.opts.disconnected) try cx.diags.warn(m.line, "The model {s} contains {d} disconnected DAGs.", .{ m.label, cc.count });
+                try endPage(cx, out);
+                try page(cx, out);
+                try componentsTable(a, out, s.names, m, cc);
+            }
+            if (c) |cyc| {
+                if (cc.count > 1) try out.appendSlice(a, "\n\n") else {
+                    try endPage(cx, out);
+                    try page(cx, out);
+                }
+                try cyclesTable(a, out, s.names, m, cyc);
+                try cycleError(cx, m);
+            }
+        }
+        try endPage(cx, out);
+        keep.* = true;
+        return error.ParseError;
+    }
     var any_disc = false;
     for (s.models) |m| {
         const cc = try componentIds(a, s.names, m);
@@ -1155,6 +1283,12 @@ pub fn run(cx: proc.ProcCtx, out: *Out, t: []const lex.Token) diag.Error!void {
         if (iv) try ivListTable(cx, out, s, m, cands.items) else try adjustTable(cx, out, s, m, msets, cands.items);
     }
     try endPage(cx, out);
+}
+
+/// Recorded without failing yet: SAS reports every cyclic model (and the
+/// warnings of the models between them) before stopping the step.
+fn cycleError(cx: proc.ProcCtx, m: Model) !void {
+    try cx.diags.report(.err, m.line, "The model {s} contains at least 1 directed cycle.", .{m.label});
 }
 
 const Components = struct { ids: []const usize, count: usize, sorted: []const usize };
@@ -2051,4 +2185,80 @@ test "STAT-CAUSALGRAPH-005 hand-derived instruments, backdoor sets and proper pa
     try std.testing.expectEqualStrings("X ==> Y", kr[0].text);
     try std.testing.expectEqualStrings("X ==> K <== Y", kr[1].text);
     try std.testing.expect(!kr[1].causal and !kr[1].blocked);
+}
+
+test "STAT-CAUSALGRAPH-009 DirectedCycles walk follows the SAS reference runs (p.2329)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Reference model 'A' B ==> C ==> A ==> B prints A B C A; model 'Two'
+    // A ==> C ==> A, A ==> B ==> A prints A B A; model 'U' X ==> U ==> Y
+    // ==> X prints U Y X U; a DAG has no cycle.
+    const names = [_][]const u8{ "B", "C", "A", "X", "U", "Y" };
+    const m1: Model = .{ .label = "A", .line = 1, .nodes = &.{ 0, 1, 2 }, .edges = &.{ .{ .from = 0, .to = 1 }, .{ .from = 1, .to = 2 }, .{ .from = 2, .to = 0 } } };
+    try std.testing.expectEqualSlices(usize, &.{ 2, 0, 1, 2 }, (try firstCycle(a, &names, m1)).?);
+    const m2: Model = .{ .label = "Two", .line = 1, .nodes = &.{ 2, 1, 0 }, .edges = &.{ .{ .from = 2, .to = 1 }, .{ .from = 1, .to = 2 }, .{ .from = 2, .to = 0 }, .{ .from = 0, .to = 2 } } };
+    try std.testing.expectEqualSlices(usize, &.{ 2, 0, 2 }, (try firstCycle(a, &names, m2)).?);
+    const m3: Model = .{ .label = "U", .line = 1, .nodes = &.{ 3, 4, 5 }, .edges = &.{ .{ .from = 3, .to = 4 }, .{ .from = 4, .to = 5 }, .{ .from = 5, .to = 3 } } };
+    try std.testing.expectEqualSlices(usize, &.{ 4, 5, 3, 4 }, (try firstCycle(a, &names, m3)).?);
+    // A bidirected edge never closes a directed cycle (p.2316).
+    const m4: Model = .{ .label = "D", .line = 1, .nodes = &.{ 3, 5 }, .edges = &.{ .{ .from = 3, .to = 5 }, .{ .from = 5, .to = 3, .bi = true } } };
+    try std.testing.expect(try firstCycle(a, &names, m4) == null);
+}
+
+test "STAT-CAUSALGRAPH-009 adding an edge never makes an adjustment set appear (p.2330)" {
+    // p.2330: adding edges to an existing set of variables never helps
+    // identification. Exhaustive check over every DAG on 0 X, 1 Y, 2 Z
+    // (measured) and 3 U (unmeasured) for all 24 topological orders, and on
+    // five nodes (Z1, Z2 measured, U latent) for one order: whenever G plus
+    // one edge has an adjustment set, G has one too.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Helper = struct {
+        fn identified(al: A, n: usize, order: []const usize, mask: u32, cands: []const usize) !bool {
+            var edges: std.ArrayList(Edge) = .empty;
+            var bit: u5 = 0;
+            for (0..n) |i| for (i + 1..n) |j| {
+                if ((mask >> bit) & 1 == 1) try edges.append(al, .{ .from = order[i], .to = order[j] });
+                bit += 1;
+            };
+            const an = try analyse(al, n, edges.items, &.{0}, &.{1});
+            return (try enumerate(al, n, an, cands, &.{0}, &.{1}, 0)).len > 0;
+        }
+    };
+    var checked: usize = 0;
+    var orders: std.ArrayList([4]usize) = .empty;
+    for (0..4) |p0| for (0..4) |p1| for (0..4) |p2| for (0..4) |p3| {
+        const p = [4]usize{ p0, p1, p2, p3 };
+        var used = [_]bool{false} ** 4;
+        var ok = true;
+        for (p) |v| {
+            if (used[v]) ok = false;
+            used[v] = true;
+        }
+        if (ok) try orders.append(a, p);
+    };
+    for (orders.items) |order| {
+        for (0..64) |g| {
+            const base = try Helper.identified(a, 4, &order, @intCast(g), &.{2});
+            for (0..6) |b| {
+                if ((g >> @intCast(b)) & 1 == 1) continue;
+                const more = try Helper.identified(a, 4, &order, @intCast(g | (@as(usize, 1) << @intCast(b))), &.{2});
+                try std.testing.expect(!more or base);
+                checked += 1;
+            }
+        }
+    }
+    const order5 = [_]usize{ 4, 2, 0, 3, 1 };
+    for (0..1024) |g| {
+        const base = try Helper.identified(a, 5, &order5, @intCast(g), &.{ 2, 3 });
+        for (0..10) |b| {
+            if ((g >> @intCast(b)) & 1 == 1) continue;
+            const more = try Helper.identified(a, 5, &order5, @intCast(g | (@as(usize, 1) << @intCast(b))), &.{ 2, 3 });
+            try std.testing.expect(!more or base);
+            checked += 1;
+        }
+    }
+    try std.testing.expect(checked > 9000);
 }

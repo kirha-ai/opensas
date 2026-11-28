@@ -3255,7 +3255,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
         var causalgraph_context = pcx;
         causalgraph_context.listing_titles = g;
         var body: std.ArrayList(u8) = .empty;
-        try sas.causalgraph.run(causalgraph_context, &body, toks);
+        // SAS prints the DirectedCycles tables before a cycle error
+        // (STAT-CAUSALGRAPH-009): `keep` keeps that partial listing.
+        var causalgraph_keep = false;
+        sas.causalgraph.runKeeping(causalgraph_context, &body, toks, &causalgraph_keep) catch |e| {
+            if (causalgraph_keep) try out.appendSlice(a, body.items);
+            return e;
+        };
         try out.appendSlice(a, body.items);
     } else if (eqi(proc, "psmatch")) {
         // Titles and BY lines are emitted per page by the procedure.

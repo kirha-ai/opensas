@@ -1,0 +1,10 @@
+# corpus assertions
+empty-listing
+stderr-count 1 You cannot specify X ===> X in the model S.
+stderr-count 1 The model NP contains at least 1 directed cycle.
+stderr-count 1 The model H1 contains at least 1 directed cycle.
+stderr-count 1 The model H2 contains at least 1 directed cycle.
+stderr-count 1 The model P contains at least 1 directed cycle.
+stderr-count 1 The outcome variable Y is not found in the model C2.
+stderr-count 1 The model C2 must contain at least one outcome variable.
+stderr-count 0 The model C1 contains at least 1 directed cycle.
