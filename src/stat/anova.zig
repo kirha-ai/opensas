@@ -3,10 +3,13 @@
 //! S154 ch.29: PROC ANOVA statement (physical pp.1115–1117), BY (1117–1118),
 //! FREQ (1119), Missing Values (1138–1139).
 //!
-//! ponytail: CLASS/MODEL column resolution, the design and the least-squares
-//! kernel are GLM's. That is only valid where ANOVA SS equals sequential SS:
-//! one-way models and balanced complete crossings. Everything else stays a
-//! loud D-009 gap instead of printing GLM numbers under an ANOVA heading.
+//! CLASS / MODEL / Specification of Effects (STAT-ANOVA-003, physical
+//! pp.1118–1119, 1129, 1135–1138): ANOVA reads its own effect grammar, REF=,
+//! TRUNCATE, INT and NOUNI, and computes sums of squares from cell totals
+//! (p.1128 rules), never from the GLM least-squares kernel.
+//!
+//! ponytail: dataset/CLASS/response/BY/FREQ resolution and row selection
+//! are GLM's reader and builder; EFFECTSIZE stays a loud D-009 gap.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const diag = @import("../diag.zig");
@@ -97,16 +100,17 @@ fn check(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!void {
             return proc.failGap(cx.diags, line, "PROC ANOVA: the {s} statement is not implemented", .{word});
         } else if (eq(word, "class")) {
             if (model_seen) return cx.diags.fail(error.ParseError, line, "PROC ANOVA: CLASS must precede MODEL", .{});
-            for (t[i + 1 .. end]) |token| if (token.tag == .lparen or token.tag == .slash) return proc.failGap(cx.diags, token.line, "PROC ANOVA: CLASS REF= and TRUNCATE options are not implemented", .{});
         } else if (eq(word, "model")) {
             if (model_seen) return cx.diags.fail(error.ParseError, line, "PROC ANOVA: only one MODEL statement is allowed", .{});
             model_seen = true;
             var j = i + 1;
             while (j < end and !at(t, j, .slash)) j += 1;
             j += 1;
+            // p.1129: the whole MODEL option grammar (SAS 9.4 wording for others).
             while (j < end) : (j += 1) {
-                if (oneOf(t[j].text, .{ "int", "intercept", "nouni" })) return proc.failGap(cx.diags, t[j].line, "PROC ANOVA: MODEL option {s} is not implemented", .{t[j].text});
-                return cx.diags.fail(error.ParseError, t[j].line, "PROC ANOVA: invalid MODEL option {s}", .{t[j].text});
+                if (at(t, j, .name) and oneOf(t[j].text, .{ "int", "intercept", "nouni" })) continue;
+                if (kw(t, j, "effectsize")) return proc.failGap(cx.diags, t[j].line, "PROC ANOVA: MODEL option EFFECTSIZE is not implemented", .{});
+                return cx.diags.fail(error.ParseError, t[j].line, "Syntax error, expecting one of the following: ;, EFFECTSIZE, INTERCEPT, NOUNI.", .{});
             }
         } else if (eq(word, "freq")) {
             if (end != i + 2 or !at(t, i + 1, .name)) return cx.diags.fail(error.ParseError, line, "PROC ANOVA: FREQ requires exactly one variable", .{});
@@ -120,7 +124,187 @@ fn check(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!void {
 
 /// One MEANS effect (S154 physical pp.1123–1129).
 pub const MeansRequest = struct { effect: usize, tukey: bool = false, alpha: f64 = 0.05, line: usize = 0 };
-pub const Parsed = struct { spec: Spec, means: []const MeansRequest };
+pub const Parsed = struct { spec: Spec, means: []const MeansRequest, options: Options = .{} };
+
+/// CLASS options (pp.1118–1119) and MODEL options (p.1129) that the shared
+/// GLM reader does not carry. `refs` is indexed like `spec.classes`.
+pub const Options = struct {
+    intercept: bool = false,
+    nouni: bool = false,
+    truncate: bool = false,
+    refs: []const ?Reference = &.{},
+};
+pub const Reference = @import("class_levels.zig").Reference;
+const NamedRef = struct { name: []const u8, ref: Reference };
+
+/// `s` is one CLASS statement without its semicolon. Returns its variable
+/// tokens; REF= and global options are recorded.
+fn readClass(cx: proc.ProcCtx, s: []const lex.Token, refs: *std.ArrayList(NamedRef), global: *?Reference, truncate: *bool) diag.Error![]const lex.Token {
+    var names: std.ArrayList(lex.Token) = .empty;
+    const line = s[0].line;
+    var i: usize = 1;
+    while (i < s.len and !at(s, i, .slash)) {
+        if (!at(s, i, .name)) return cx.diags.fail(error.ParseError, s[i].line, "PROC ANOVA: invalid CLASS statement", .{});
+        try names.append(cx.arena, s[i]);
+        i += 1;
+        if (at(s, i, .lparen)) {
+            if (!kw(s, i + 1, "ref") or !at(s, i + 2, .eq) or !at(s, i + 4, .rparen)) return cx.diags.fail(error.ParseError, line, "PROC ANOVA: CLASS variable options are (REF='level' | FIRST | LAST)", .{});
+            const value = s[i + 3];
+            const ref: Reference = if (value.tag == .string) .{ .label = value.text } else if (value.tag == .name and eq(value.text, "first")) .first else if (value.tag == .name and eq(value.text, "last")) .last else return cx.diags.fail(error.ParseError, line, "PROC ANOVA: CLASS REF= requires a quoted level, FIRST or LAST", .{});
+            try refs.append(cx.arena, .{ .name = s[i - 1].text, .ref = ref });
+            i += 5;
+        }
+    }
+    if (at(s, i, .slash)) {
+        i += 1;
+        while (i < s.len) {
+            if (kw(s, i, "truncate")) {
+                truncate.* = true;
+                i += 1;
+            } else if (kw(s, i, "ref") and at(s, i + 1, .eq) and (kw(s, i + 2, "first") or kw(s, i + 2, "last"))) {
+                global.* = if (kw(s, i + 2, "first")) .first else .last;
+                i += 3;
+            } else return cx.diags.fail(error.ParseError, s[i].line, "PROC ANOVA: CLASS global options are REF=FIRST | LAST and TRUNCATE", .{});
+        }
+    }
+    return names.items;
+}
+
+/// One written effect term of S154 pp.1123–1126: crossed CLASS variables
+/// and an optional nesting list. Columns are kept in CLASS order.
+const Term = struct { crossed: []const usize, nested: []const usize };
+
+fn classPosition(classes: []const usize, ci: usize) usize {
+    return std.mem.indexOfScalar(usize, classes, ci) orelse classes.len;
+}
+fn sortedUnique(a: A, classes: []const usize, items: []const usize) ![]const usize {
+    var list: std.ArrayList(usize) = .empty;
+    for (items) |ci| if (std.mem.indexOfScalar(usize, list.items, ci) == null) try list.append(a, ci);
+    std.mem.sort(usize, list.items, classes, struct {
+        fn less(c: []const usize, x: usize, y: usize) bool {
+            return classPosition(c, x) < classPosition(c, y);
+        }
+    }.less);
+    return list.items;
+}
+
+/// SAS 9.4 messages (live probe): a non-CLASS variable in an effect and in a
+/// nesting list.
+fn effectVariable(cx: proc.ProcCtx, spec: Spec, t: []const lex.Token, i: *usize, inside: bool) diag.Error!usize {
+    if (!at(t, i.*, .name)) return cx.diags.fail(error.ParseError, if (i.* < t.len) t[i.*].line else 0, "PROC ANOVA: invalid effect specification", .{});
+    const token = t[i.*];
+    i.* += 1;
+    const ci = spec.input.ds.indexOf(token.text) orelse return cx.diags.fail(error.ParseError, token.line, "Variable {s} not found.", .{token.text});
+    if (std.mem.indexOfScalar(usize, spec.classes, ci) == null) {
+        if (inside) return cx.diags.fail(error.ParseError, token.line, "Nesting of continuous variable not allowed.", .{});
+        return cx.diags.fail(error.ParseError, token.line, "No continuous effects allowed in PROC ANOVA.", .{});
+    }
+    return ci;
+}
+
+fn readTerm(cx: proc.ProcCtx, spec: Spec, t: []const lex.Token, i: *usize) diag.Error!Term {
+    var crossed: std.ArrayList(usize) = .empty;
+    try crossed.append(cx.arena, try effectVariable(cx, spec, t, i, false));
+    while (at(t, i.*, .star)) {
+        i.* += 1;
+        try crossed.append(cx.arena, try effectVariable(cx, spec, t, i, false));
+    }
+    var nested: std.ArrayList(usize) = .empty;
+    if (at(t, i.*, .lparen)) {
+        i.* += 1;
+        while (i.* < t.len and !at(t, i.*, .rparen)) try nested.append(cx.arena, try effectVariable(cx, spec, t, i, true));
+        if (nested.items.len == 0 or !at(t, i.*, .rparen)) return cx.diags.fail(error.ParseError, if (i.* < t.len) t[i.*].line else 0, "PROC ANOVA: invalid nested effect", .{});
+        i.* += 1;
+    }
+    return .{ .crossed = try sortedUnique(cx.arena, spec.classes, crossed.items), .nested = try sortedUnique(cx.arena, spec.classes, nested.items) };
+}
+
+fn termName(a: A, ds: anytype, term: Term) ![]const u8 {
+    var name: std.ArrayList(u8) = .empty;
+    for (term.crossed, 0..) |ci, k| {
+        if (k > 0) try name.append(a, '*');
+        try name.appendSlice(a, ds.columns.items[ci].name);
+    }
+    if (term.nested.len > 0) {
+        try name.append(a, '(');
+        for (term.nested, 0..) |ci, k| {
+            if (k > 0) try name.append(a, ' ');
+            try name.appendSlice(a, ds.columns.items[ci].name);
+        }
+        try name.append(a, ')');
+    }
+    return name.items;
+}
+
+/// MODEL effects (pp.1123–1126): main, crossed (A*B), nested (B(A),
+/// C*D(A B)), bar (A|B|C) and @n. Bar terms expand left to right as binary
+/// subsets (A B A*B C ...); nesting lists merge, a combination with a
+/// variable both crossed and nested is dropped, and @n bounds the number of
+/// variables including nesting ones (A | B(A) | C@2 = A B(A) C A*C). SAS 9.4
+/// reference: a repeated effect (A A, A*A) is kept once; A(A) is accepted.
+fn readEffects(cx: proc.ProcCtx, spec: Spec, t: []const lex.Token) diag.Error![]const glm.parsing.Effect {
+    const a = cx.arena;
+    var out: std.ArrayList(glm.parsing.Effect) = .empty;
+    var terms: std.ArrayList(Term) = .empty;
+    var i: usize = 0;
+    while (i < t.len) {
+        var chain: std.ArrayList(Term) = .empty;
+        try chain.append(a, try readTerm(cx, spec, t, &i));
+        while (at(t, i, .pipe)) {
+            i += 1;
+            try chain.append(a, try readTerm(cx, spec, t, &i));
+        }
+        var degree: usize = std.math.maxInt(usize);
+        if (at(t, i, .at)) {
+            if (chain.items.len < 2 or !at(t, i + 1, .number)) return cx.diags.fail(error.ParseError, t[i].line, "PROC ANOVA: @ requires a bar effect and a positive integer", .{});
+            degree = std.fmt.parseInt(usize, t[i + 1].text, 10) catch return cx.diags.fail(error.ParseError, t[i].line, "PROC ANOVA: invalid @ degree", .{});
+            if (degree == 0) return cx.diags.fail(error.ParseError, t[i].line, "PROC ANOVA: @ degree must be positive", .{});
+            i += 2;
+        }
+        if (chain.items.len > 16) return proc.failGap(cx.diags, t[0].line, "PROC ANOVA: bar expansion beyond sixteen terms is not implemented", .{});
+        if (chain.items.len == 1) {
+            try terms.append(a, chain.items[0]);
+            continue;
+        }
+        const end = @as(usize, 1) << @as(u5, @intCast(chain.items.len));
+        for (1..end) |mask| {
+            var crossed: std.ArrayList(usize) = .empty;
+            var nested: std.ArrayList(usize) = .empty;
+            for (chain.items, 0..) |term, k| if (mask & (@as(usize, 1) << @as(u5, @intCast(k))) != 0) {
+                try crossed.appendSlice(a, term.crossed);
+                try nested.appendSlice(a, term.nested);
+            };
+            const c = try sortedUnique(a, spec.classes, crossed.items);
+            const n = try sortedUnique(a, spec.classes, nested.items);
+            if (c.len + n.len > degree) continue;
+            if (@popCount(mask) > 1) {
+                var overlap = false;
+                for (n) |ci| if (std.mem.indexOfScalar(usize, c, ci) != null) {
+                    overlap = true;
+                };
+                if (overlap) continue;
+            }
+            try terms.append(a, .{ .crossed = c, .nested = n });
+        }
+    }
+    for (terms.items) |term| {
+        const full = try termName(a, spec.input.ds, term);
+        // NAMELEN= (p.1115): a main effect name is cut; other shapes are
+        // shortened (or gapped) by effectLabel.
+        const name = if (term.crossed.len == 1 and term.nested.len == 0) full[0..@min(full.len, spec.namelen)] else full;
+        var all: std.ArrayList(usize) = .empty;
+        try all.appendSlice(a, term.crossed);
+        try all.appendSlice(a, term.nested);
+        const variables = try sortedUnique(a, spec.classes, all.items);
+        var duplicate = false;
+        for (out.items) |e| {
+            if (std.mem.eql(u8, e.name, name)) duplicate = true else if (std.mem.eql(usize, e.variables, variables))
+                return proc.failGap(cx.diags, t[0].line, "PROC ANOVA: effects {s} and {s} over the same variables are not implemented", .{ e.name, name });
+        }
+        if (!duplicate) try out.append(a, .{ .name = name, .variables = variables });
+    }
+    return out.items;
+}
 
 const comparison_options = .{ "bon", "cldiff", "clm", "duncan", "dunnett", "dunnettl", "dunnettu", "e", "etype", "gabriel", "gt2", "hovtest", "htype", "kratio", "lines", "linestable", "lsd", "nosort", "regwq", "scheffe", "sidak", "smm", "snk", "t", "waller", "welch" };
 
@@ -174,6 +358,10 @@ pub fn parseAll(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Parsed {
     var rest: std.ArrayList(lex.Token) = .empty;
     var statements: std.ArrayList([]const lex.Token) = .empty;
     var class_end: ?usize = null; // index of the first CLASS statement's semicolon in `rest`
+    var options: Options = .{};
+    var refs: std.ArrayList(NamedRef) = .empty;
+    var global_ref: ?Reference = null;
+    var effect_tokens: []const lex.Token = &.{};
     var i: usize = 0;
     while (i < tokens.len) {
         var end = i;
@@ -199,13 +387,34 @@ pub fn parseAll(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Parsed {
                 try rest.append(cx.arena, tokens[j]);
                 j += 1;
             }
-        } else if (kw(tokens, i, "class") and class_end != null) {
-            // SAS reference: a second CLASS statement adds its variables to
-            // the first; the shared reader takes one CLASS statement.
-            try rest.insertSlice(cx.arena, class_end.?, tokens[i + 1 .. end]);
-            class_end.? += end - (i + 1);
+        } else if (kw(tokens, i, "class")) {
+            const names = try readClass(cx, tokens[i..end], &refs, &global_ref, &options.truncate);
+            if (class_end) |*position| {
+                // SAS reference: a second CLASS statement adds its variables
+                // to the first; the shared reader takes one CLASS statement.
+                try rest.insertSlice(cx.arena, position.*, names);
+                position.* += names.len;
+            } else {
+                try rest.append(cx.arena, tokens[i]);
+                try rest.appendSlice(cx.arena, names);
+                class_end = rest.items.len;
+                try rest.append(cx.arena, tokens[end]);
+            }
+        } else if (kw(tokens, i, "model")) {
+            // The shared reader resolves the responses only; ANOVA reads its
+            // own effect grammar and options (pp.1123–1129).
+            var equal = i + 1;
+            while (equal < end and !at(tokens, equal, .eq)) equal += 1;
+            var slash = equal;
+            while (slash < end and !at(tokens, slash, .slash)) slash += 1;
+            if (equal < end) effect_tokens = tokens[equal + 1 .. slash];
+            for (tokens[@min(slash + 1, end)..end]) |option| {
+                if (oneOf(option.text, .{ "int", "intercept" })) options.intercept = true;
+                if (eq(option.text, "nouni")) options.nouni = true;
+            }
+            try rest.appendSlice(cx.arena, tokens[i..@min(end, equal + 1)]);
+            try rest.append(cx.arena, tokens[end]);
         } else {
-            if (kw(tokens, i, "class") and i > 0) class_end = rest.items.len + (end - i);
             try rest.appendSlice(cx.arena, tokens[i..@min(tokens.len, end + 1)]);
         }
         i = end + 1;
@@ -214,12 +423,17 @@ pub fn parseAll(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Parsed {
     var spec = glm.parse(cx, rest.items) catch |err| return relabel(cx, mark, err);
     // ANOVA prints one "Anova SS" table; never ask the kernel for Type II–IV.
     spec.ss1 = true;
-    for (spec.effects) |effect| for (effect.variables) |ci| {
-        if (std.mem.indexOfScalar(usize, spec.classes, ci) == null) return proc.failGap(cx.diags, 0, "PROC ANOVA: continuous effect {s} is not implemented; independent effects must use CLASS variables", .{spec.input.ds.columns.items[ci].name});
-    };
+    spec.effects = try readEffects(cx, spec, effect_tokens);
+    const resolved = try cx.arena.alloc(?Reference, spec.classes.len);
+    @memset(resolved, global_ref);
+    for (refs.items) |named| {
+        const ci = spec.input.ds.indexOf(named.name) orelse continue;
+        resolved[std.mem.indexOfScalar(usize, spec.classes, ci) orelse continue] = named.ref;
+    }
+    options.refs = resolved;
     var requests: std.ArrayList(MeansRequest) = .empty;
     for (statements.items) |statement| try readMeans(cx, statement, spec, &requests);
-    return .{ .spec = spec, .means = requests.items };
+    return .{ .spec = spec, .means = requests.items, .options = options };
 }
 
 /// Missing-value rule (pp.1138–1139): one response uses rows complete for
@@ -227,33 +441,174 @@ pub fn parseAll(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Parsed {
 /// GLM's builder require every response. FREQ <1 or missing drops the row,
 /// fractional FREQ is truncated (p.1119).
 pub fn build(cx: proc.ProcCtx, spec: Spec, group: selection.View, response: usize) diag.Error!Design {
-    return glm.design.build(cx, spec, group, response);
+    return buildWith(cx, spec, .{}, group, response);
 }
 
-/// Sequential SS is the ANOVA SS only for one-way models or when every cell
-/// of the complete crossing of the model's CLASS variables has the same
-/// (frequency-expanded) count.
-pub fn balanced(a: A, spec: Spec, d: Design) !bool {
-    if (spec.effects.len == 1 and spec.effects[0].variables.len == 1) return true;
-    var used: std.ArrayList(usize) = .empty;
-    for (d.classes, 0..) |class, k| {
-        for (spec.effects) |effect| if (std.mem.indexOfScalar(usize, effect.variables, class.column) != null) {
-            try used.append(a, k);
-            break;
+/// Row selection and CLASS levels come from the shared GLM builder, given
+/// one main effect per model variable (ANOVA never uses its X columns: the
+/// sums of squares are computed from cell totals, see `ssTable`). TRUNCATE and
+/// REF= then reshape the levels (pp.1118–1119).
+pub fn buildWith(cx: proc.ProcCtx, spec: Spec, options: Options, group: selection.View, response: usize) diag.Error!Design {
+    const a = cx.arena;
+    var mains: std.ArrayList(glm.parsing.Effect) = .empty;
+    var seen: std.ArrayList(usize) = .empty;
+    for (spec.effects) |effect| for (effect.variables) |ci| if (std.mem.indexOfScalar(usize, seen.items, ci) == null) {
+        try seen.append(a, ci);
+        const one = try a.alloc(usize, 1);
+        one[0] = ci;
+        try mains.append(a, .{ .name = spec.input.ds.columns.items[ci].name, .variables = one });
+    };
+    var plain = spec;
+    plain.effects = mains.items;
+    var d = try glm.design.build(cx, plain, group, response);
+    const rows = try a.alloc([]const @import("../value.zig").Value, d.n);
+    for (rows, d.observations[0..d.n]) |*r, o| r.* = o.cells;
+    d.classes = try adjustClasses(cx, spec, options, d.classes, rows, d.frequencies[0..d.n]);
+    return d;
+}
+
+/// TRUNCATE: levels from the first 16 formatted characters (p.1119, SAS
+/// reference `abcdefghijklmnop`). REF=: the reference level moves to the
+/// end of the level list (p.1118; SAS reference listings show the moved
+/// level last in Class Level Information and in MEANS tables).
+fn adjustClasses(cx: proc.ProcCtx, spec: Spec, options: Options, classes: []const glm.design.Class, rows: []const []const @import("../value.zig").Value, counts: []const f64) diag.Error![]const glm.design.Class {
+    const a = cx.arena;
+    const out = try a.dupe(glm.design.Class, classes);
+    for (out, 0..) |*class, k| {
+        if (options.truncate) {
+            const formed = try @import("class_levels.zig").build(a, spec.input.ds, rows, class.column, .{ .order = spec.order, .frequencies = counts, .missing = .exclude, .truncate = true });
+            class.* = .{ .column = class.column, .levels = formed.levels, .row_levels = formed.row_to_level };
+        }
+        const ref = (if (k < options.refs.len) options.refs[k] else null) orelse continue;
+        const len = class.levels.len;
+        if (len == 0) continue;
+        const name = spec.input.ds.columns.items[class.column].name;
+        const r: usize = switch (ref) {
+            .first => 0,
+            .last => len - 1,
+            .label => |text| for (class.levels, 0..) |level, index| {
+                if (std.mem.eql(u8, std.mem.trim(u8, level.label, " "), std.mem.trim(u8, text, " "))) break index;
+            } else return cx.diags.fail(error.ExecError, 0, "Invalid reference value for {s}.", .{name}),
         };
+        if (r == len - 1) continue;
+        const levels = try a.alloc(glm.design.Level, len);
+        const map = try a.alloc(usize, len);
+        var next: usize = 0;
+        for (class.levels, 0..) |level, index| if (index != r) {
+            levels[next] = level;
+            map[index] = next;
+            next += 1;
+        };
+        levels[len - 1] = class.levels[r];
+        map[r] = len - 1;
+        const row_levels = try a.alloc(?usize, class.row_levels.len);
+        for (class.row_levels, row_levels) |old, *new| new.* = if (old) |o| map[o] else null;
+        class.* = .{ .column = class.column, .levels = levels, .row_levels = row_levels };
     }
-    var cells: usize = 1;
-    for (used.items) |k| cells = std.math.mul(usize, cells, d.classes[k].levels.len) catch return false;
-    if (cells == 0) return false;
-    const counts = try a.alloc(f64, cells);
-    @memset(counts, 0);
-    for (0..d.n) |i| {
-        var cell: usize = 0;
-        for (used.items) |k| cell = cell * d.classes[k].levels.len + (d.classes[k].row_levels[i] orelse return false);
-        counts[cell] += d.frequencies[i];
+    return out;
+}
+
+/// The ANOVA computational method (S154 p.1128): each effect's SS is the
+/// sum over its cells (all its variables, nesting ones included) of
+/// total^2/frequency minus the correction term, less the SS of every model
+/// effect whose variables are a proper subset; DF likewise from the number
+/// of nonempty cells. This makes the result independent of effect order and
+/// pools an omitted effect into the containing one (p.1125: `A B(A)` equals
+/// `A A*B`). The Model SS is the sum of the effect SS, capped at the
+/// corrected total, and Error SS is the remainder: SAS 9.4 reference runs
+/// show exactly this on unbalanced and incomplete-block data (Model =
+/// Corrected Total, Error 0), and a negative effect SS displayed as 0.
+pub const Row = struct { df: f64, ss: f64 };
+pub const Table = struct {
+    effects: []const Row,
+    model_df: f64,
+    model_ss: f64,
+    error_df: f64,
+    sse: f64,
+    total: f64,
+    n: f64,
+    mean: f64,
+    cf: f64,
+    uss: f64,
+    /// Some effect has cells of different frequencies (p.1107 balance test).
+    unequal: bool,
+};
+
+pub fn ssTable(cx: proc.ProcCtx, spec: Spec, d: Design) diag.Error!Table {
+    const a = cx.arena;
+    var n: f64 = 0;
+    var sum: f64 = 0;
+    var uss: f64 = 0;
+    for (d.y[0..d.n], d.frequencies[0..d.n]) |y, f| {
+        n += f;
+        sum += f * y;
+        uss += f * y * y;
     }
-    for (counts) |count| if (count != counts[0] or count <= 0) return false;
-    return true;
+    const cf = sum * sum / n;
+    const total = @max(0, uss - cf);
+    const rows = try a.alloc(Row, spec.effects.len);
+    const order = try a.alloc(usize, spec.effects.len);
+    for (order, 0..) |*o, k| o.* = k;
+    std.mem.sort(usize, order, spec.effects, struct {
+        fn less(e: []const glm.parsing.Effect, x: usize, y: usize) bool {
+            return e[x].variables.len < e[y].variables.len;
+        }
+    }.less);
+    var unequal = false;
+    for (order) |e| {
+        const effect = spec.effects[e];
+        const positions = try a.alloc(usize, effect.variables.len);
+        var cells_total: u64 = 1;
+        for (effect.variables, positions) |ci, *pos| {
+            pos.* = for (d.classes, 0..) |class, k| {
+                if (class.column == ci) break k;
+            } else return error.ExecError;
+            cells_total = std.math.mul(u64, cells_total, d.classes[pos.*].levels.len) catch return proc.failGap(cx.diags, 0, "PROC ANOVA: effect {s} has too many cells", .{effect.name});
+        }
+        var cells: std.AutoHashMapUnmanaged(u64, [2]f64) = .empty;
+        for (0..d.n) |i| {
+            var key: u64 = 0;
+            for (positions) |pos| key = key * d.classes[pos].levels.len + (d.classes[pos].row_levels[i] orelse return error.ExecError);
+            const entry = try cells.getOrPut(a, key);
+            if (!entry.found_existing) entry.value_ptr.* = .{ 0, 0 };
+            entry.value_ptr[0] += d.frequencies[i] * d.y[i];
+            entry.value_ptr[1] += d.frequencies[i];
+        }
+        var raw: f64 = 0;
+        var first: ?f64 = null;
+        var it = cells.valueIterator();
+        while (it.next()) |cell| {
+            raw += cell[0] * cell[0] / cell[1];
+            if (first) |f| {
+                if (f != cell[1]) unequal = true;
+            } else first = cell[1];
+        }
+        var ss = raw - cf;
+        var df: f64 = @as(f64, @floatFromInt(cells.count())) - 1;
+        for (spec.effects, 0..) |other, o| {
+            if (other.variables.len >= effect.variables.len) continue;
+            const contained = for (other.variables) |ci| {
+                if (std.mem.indexOfScalar(usize, effect.variables, ci) == null) break false;
+            } else true;
+            if (!contained) continue;
+            ss -= rows[o].ss;
+            df -= rows[o].df;
+        }
+        // SAS 9.4 reference: a one-level effect has DF 0 and prints `.` tests.
+        if (df < 0) return proc.failGap(cx.diags, 0, "PROC ANOVA: effect {s} with negative degrees of freedom is not implemented", .{effect.name});
+        rows[e] = .{ .df = df, .ss = ss };
+    }
+    var model_df: f64 = 0;
+    var model_ss: f64 = 0;
+    for (rows) |row| {
+        model_df += row.df;
+        model_ss += row.ss;
+    }
+    // Rounding noise of a balanced design must not leave a tiny negative SS.
+    model_ss = std.math.clamp(model_ss, 0, total);
+    const error_df = n - 1 - model_df;
+    if (error_df < 0) return proc.failGap(cx.diags, 0, "PROC ANOVA: models with more effect degrees of freedom than observations are not implemented", .{});
+    return .{ .effects = rows, .model_df = model_df, .model_ss = model_ss, .error_df = error_df, .sse = total - model_ss, .total = total, .n = n, .mean = sum / n, .cf = cf, .uss = uss, .unequal = unequal };
 }
 
 fn number(a: A, value: f64, decimals: usize) ![]const u8 {
@@ -381,7 +736,7 @@ var patterns_differ = false;
 /// (pp.1138–1139): levels come from every observation usable for the
 /// independent variables, not from one response's rows (SAS reference: a
 /// level absent for one response is still listed).
-fn classInfo(cx: proc.ProcCtx, spec: Spec, group: selection.View) ![]const glm.design.Class {
+fn classInfo(cx: proc.ProcCtx, spec: Spec, options: Options, group: selection.View) diag.Error![]const glm.design.Class {
     const a = cx.arena;
     var required: std.ArrayList(usize) = .empty;
     for (spec.effects) |effect| for (effect.variables) |ci| if (std.mem.indexOfScalar(usize, required.items, ci) == null) try required.append(a, ci);
@@ -397,7 +752,7 @@ fn classInfo(cx: proc.ProcCtx, spec: Spec, group: selection.View) ![]const glm.d
         const formed = try @import("class_levels.zig").build(a, spec.input.ds, rows, ci, .{ .order = spec.order, .frequencies = counts, .missing = .exclude });
         info.* = .{ .column = ci, .levels = formed.levels, .row_levels = formed.row_to_level };
     }
-    return infos;
+    return adjustClasses(cx, spec, options, infos, rows, counts);
 }
 
 /// Observation and frequency counts of one dependent-variable group (FREQ:
@@ -427,6 +782,10 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
     for (parsed.means) |request| if (request.tukey and !graphs and !spec.noprint) return proc.failGap(cx.diags, request.line, "PROC ANOVA: the MEANS TUKEY LINES table is not implemented without ODS Graphics", .{});
     // ponytail: box plots of FREQ-weighted data are not validated.
     if (graphs and spec.freq != null and (parsed.means.len != 0 or oneWay(spec))) return proc.failGap(cx.diags, 0, "PROC ANOVA: ODS Graphics box plots with a FREQ statement are not implemented; specify PLOTS=NONE", .{});
+    const options = parsed.options;
+    // ponytail: NOUNI with ODS Graphics has no SAS reference here.
+    if (options.nouni and graphs and (parsed.means.len != 0 or oneWay(spec))) return proc.failGap(cx.diags, 0, "PROC ANOVA: MODEL NOUNI with ODS Graphics is not implemented; specify PLOTS=NONE", .{});
+    var warned = false;
     var order: usize = 0;
     const view = try selection.View.init(a, spec.input, .{ .by = spec.by, .frequency = spec.freq });
     const groups = try view.groups(a, spec.descending, spec.notsorted, cx.diags);
@@ -436,10 +795,10 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
         const by: ?usize = if (spec.by.len != 0) group_index + 1 else null;
         var designs: std.ArrayList(Design) = .empty;
         var errors: std.ArrayList(ErrorTerm) = .empty;
-        var fits: std.ArrayList(FitResult) = .empty;
+        var fits: std.ArrayList(Table) = .empty;
         for (spec.responses) |response| {
             const mark = cx.diags.list.items.len;
-            const d = build(cx, spec, group, response) catch |err| return relabel(cx, mark, err);
+            const d = buildWith(cx, spec, options, group, response) catch |err| return relabel(cx, mark, err);
             if (d.n == 0) {
                 // SAS reference: this ERROR ends only the current BY group.
                 const message = "PROC ANOVA: One or more variables are missing or freq or weight is zero on every observation.";
@@ -447,11 +806,15 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
                 try cx.diags.recoverableErr(0, message, .{});
                 continue :groups;
             }
-            if (!try balanced(a, spec, d)) return proc.failGap(cx.diags, 0, "PROC ANOVA: unbalanced or incomplete multi-effect designs are not implemented", .{});
-            const result = glm.fitDesign(cx, spec, d) catch |err| return relabel(cx, mark, err);
-            if (result.model.fit.rank < d.p) return proc.failGap(cx.diags, 0, "PROC ANOVA: rank-deficient models are not implemented", .{});
+            const result = try ssTable(cx, spec, d);
+            // SAS 9.4 reference: one WARNING per step, only for models with
+            // more than one effect (an unbalanced one-way model is valid).
+            if (result.unequal and spec.effects.len > 1 and !warned and !means_only) {
+                warned = true;
+                try cx.diags.report(.warning, 0, "PROC ANOVA has determined that the number of observations in each cell is not equal.  PROC GLM may be more appropriate.", .{});
+            }
             try designs.append(a, d);
-            try errors.append(a, .{ .df = @floatFromInt(result.model.fit.df_error), .mse = result.model.fit.mse });
+            try errors.append(a, .{ .df = result.error_df, .mse = if (result.error_df > 0) result.sse / result.error_df else std.math.nan(f64) });
             try fits.append(a, result);
         }
         // pp.1138–1139: dependent variables sharing a missing-value pattern
@@ -471,7 +834,7 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
         if (!spec.noprint and !means_only) {
             try heading(cx, out, spec, group);
             try out.appendSlice(a, "\nClass Level Information\n\nClass Levels Values\n");
-            const classes = if (multiple) try classInfo(cx, spec, group) else designs.items[0].classes;
+            const classes = if (multiple) try classInfo(cx, spec, options, group) else designs.items[0].classes;
             for (classes) |class| {
                 try out.print(a, "\n{s} {d}", .{ spec.input.ds.columns.items[class.column].name, class.levels.len });
                 for (class.levels) |level| try out.print(a, " {s}", .{level.label});
@@ -497,12 +860,13 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
                 if (o != part) continue;
                 try members.append(a, d);
                 try terms.append(a, term);
-                if (spec.noprint or means_only) continue;
-                try anovaPage(cx, out, spec, group, d, result);
+                // p.1129: NOUNI suppresses the univariate tables.
+                if (spec.noprint or means_only or options.nouni) continue;
+                try anovaPage(cx, out, spec, options, group, d, result);
                 // pp.1116, 1143: default grouped box plot of a one-way model.
                 if (graphs and oneWay(spec)) {
-                    const model = result.model.fit.modelStats(true);
-                    try boxPlot(cx, spec, d, 0, .model, by, .{ .f = model.f_value, .p = model.p_value }, &order);
+                    const model = try fTest(cx, result.model_ss / result.model_df, result.model_df, result);
+                    try boxPlot(cx, spec, d, 0, .model, by, .{ .f = model.value, .p = model.p }, &order);
                 }
             }
             if (!spec.noprint) for (parsed.means) |request| {
@@ -516,34 +880,75 @@ pub fn executeAll(cx: proc.ProcCtx, out: *std.ArrayList(u8), parsed: Parsed, mea
     }
 }
 
-fn anovaPage(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, group: selection.View, d: Design, result: FitResult) diag.Error!void {
+const FTest = struct { value: f64, p: f64, f_text: []const u8, p_text: []const u8 };
+
+/// SAS 9.4 reference: no error DF prints `.`; a zero error mean square with
+/// a positive numerator prints `Infty` and `<.0001`.
+fn fTest(cx: proc.ProcCtx, ms: f64, df: f64, t: Table) diag.Error!FTest {
     const a = cx.arena;
-    const fitted = result.model.fit;
-    const model = fitted.modelStats(true);
+    if (t.error_df == 0 or df == 0) return .{ .value = std.math.nan(f64), .p = std.math.nan(f64), .f_text = ".", .p_text = "." };
+    const mse = t.sse / t.error_df;
+    if (mse == 0) {
+        if (ms > 0) return .{ .value = std.math.inf(f64), .p = 0, .f_text = "Infty", .p_text = "<.0001" };
+        return proc.failGap(cx.diags, 0, "PROC ANOVA: an F test with zero numerator and zero error mean square is not implemented", .{});
+    }
+    const value = ms / mse;
+    const p = @import("reg_fit.zig").fProbability(value, @intFromFloat(df), @intFromFloat(t.error_df));
+    return .{ .value = value, .p = p, .f_text = try number(a, value, 2), .p_text = try probability(a, p) };
+}
+
+fn anovaPage(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec, options: Options, group: selection.View, d: Design, t: Table) diag.Error!void {
+    const a = cx.arena;
     try heading(cx, out, spec, group);
     const name = spec.input.ds.columns.items[d.response].name;
     try out.print(a, "\nDependent Variable: {s}\n", .{name});
     // SAS reference listing: the FREQ variable is named under the heading.
     if (spec.freq) |fc| try out.print(a, "\nFrequency: {s}\n", .{spec.input.ds.columns.items[fc].name});
     try out.appendSlice(a, "\nSum of\nSource DF Squares Mean Square F Value Pr > F\n");
+    // p.1129 and SAS reference: INT, or a model without effects, adds the
+    // intercept to the Model row and the effect table and the total becomes
+    // the uncorrected one; R-Square stays on the corrected scale.
+    const with_intercept = options.intercept or spec.effects.len == 0;
+    const model_df = t.model_df + @as(f64, if (with_intercept) 1 else 0);
+    const model_ss = t.model_ss + if (with_intercept) t.cf else 0;
+    const total_df = if (with_intercept) t.n else t.n - 1;
+    const total_ss = if (with_intercept) t.uss else t.total;
+    const model_ms = if (model_df > 0) model_ss / model_df else std.math.nan(f64);
+    const model_f = try fTest(cx, model_ms, model_df, t);
     // SAS reference listings: the sums-of-squares columns never show more
     // than 8 decimals (6.75000000, 0.42857143), whatever the magnitude.
-    const decimals = @min(8, places(@max(fitted.sst, @max(model.ss_model, fitted.sse)), 9));
-    try out.print(a, "\nModel {d} {s} {s} {s} {s}\n\nError {d} {s} {s}\n\nCorrected Total {d} {s}\n", .{
-        model.df_model,  try number(a, model.ss_model, decimals), try number(a, model.ms_model, decimals), try number(a, model.f_value, 2), try probability(a, model.p_value),
-        fitted.df_error, try number(a, fitted.sse, decimals),     try number(a, fitted.mse, decimals),     model.df_total,                  try number(a, fitted.sst, decimals),
+    const decimals = @min(8, places(@max(total_ss, @max(model_ss, t.sse)), 9));
+    const mse: f64 = if (t.error_df > 0) t.sse / t.error_df else std.math.nan(f64);
+    try out.print(a, "\nModel {d} {s} {s} {s} {s}\n\nError {d} {s} {s}\n\n{s} Total {d} {s}\n", .{
+        model_df,                          try number(a, model_ss, decimals), try number(a, model_ms, decimals), model_f.f_text,                                     model_f.p_text,
+        t.error_df,                        try number(a, t.sse, decimals),    try number(a, mse, decimals),      if (with_intercept) "Uncorrected" else "Corrected", total_df,
+        try number(a, total_ss, decimals),
     });
-    const cv = 100 * @sqrt(fitted.mse) / fitted.y_mean;
+    const r_square = if (t.total > 0) t.model_ss / t.total else std.math.nan(f64);
+    const root = @sqrt(mse);
+    const cv = 100 * root / t.mean;
+    // SAS reference: a zero Root MSE prints as `0` in both columns.
+    const cv_text = if (root == 0) "0" else try number(a, cv, places(@abs(cv), 6));
+    const root_text = if (root == 0) "0" else try number(a, root, 6);
     try out.print(a, "\nR-Square Coeff Var Root MSE {s} Mean\n\n{s} {s} {s} {s}\n", .{
-        name, try number(a, model.r_square, 6), try number(a, cv, places(@abs(cv), 6)), try number(a, @sqrt(fitted.mse), 6), try number(a, fitted.y_mean, places(@abs(fitted.y_mean), 6)),
+        name, try number(a, r_square, 6), cv_text, root_text, try number(a, t.mean, places(@abs(t.mean), 6)),
     });
-    var maximum: f64 = 0;
-    for (result.type_i) |effect| maximum = @max(maximum, @abs(effect.ss));
+    var maximum: f64 = if (with_intercept) t.cf else 0;
+    for (t.effects) |effect| maximum = @max(maximum, effect.ss);
     const effect_decimals = @min(8, places(maximum, 9));
     try out.appendSlice(a, "\nSource DF Anova SS Mean Square F Value Pr > F\n\n");
-    for (spec.effects, result.type_i) |effect, value| try out.print(a, "{s} {d} {s} {s} {s} {s}\n", .{
-        try effectLabel(cx, spec, effect), value.df, try number(a, value.ss, effect_decimals), try number(a, value.ms, effect_decimals), try number(a, value.f_value, 2), try probability(a, value.p_value),
-    });
+    if (with_intercept) {
+        const f = try fTest(cx, t.cf, 1, t);
+        try out.print(a, "Intercept 1 {s} {s} {s} {s}\n", .{ try number(a, t.cf, effect_decimals), try number(a, t.cf, effect_decimals), f.f_text, f.p_text });
+    }
+    for (spec.effects, t.effects) |effect, row| {
+        const ss = @max(0, row.ss);
+        const ms = if (row.df > 0) ss / row.df else std.math.nan(f64);
+        const f = try fTest(cx, ms, row.df, t);
+        // SAS 9.4 reference: an all-zero Anova SS column prints `0`.
+        const ss_text = if (maximum == 0) "0" else try number(a, ss, effect_decimals);
+        try out.print(a, "{s} {d} {s} {s} {s} {s}\n", .{ try effectLabel(cx, spec, effect), row.df, ss_text, try number(a, ms, effect_decimals), f.f_text, f.p_text });
+    }
 }
 
 /// NAMELEN= (p.1115) display of an effect name. SAS reference listings:
@@ -595,7 +1000,6 @@ fn relabel(cx: proc.ProcCtx, mark: usize, err: diag.Error) diag.Error {
     return err;
 }
 
-const FitResult = @typeInfo(@typeInfo(@TypeOf(glm.fitDesign)).@"fn".return_type.?).error_union.payload;
 const ErrorTerm = struct { df: f64, mse: f64 };
 const plots = @import("anova_plots.zig");
 

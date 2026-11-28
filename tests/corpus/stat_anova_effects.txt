@@ -1,0 +1,611 @@
+q1 nested
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+Number of Observations Read 12
+Number of Observations Used 12
+q1 nested
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 5                      274.6666667                       54.9333333                            17.35                           0.0016
+
+Error 6                       19.0000000                        3.1666667
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.935301                         11.00730                         1.779513                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A 1                      225.3333333                      225.3333333                            71.16                           0.0002
+B(A) 4                       49.3333333                       12.3333333                             3.89                           0.0681
+q2 pooled
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+Number of Observations Read 12
+Number of Observations Used 12
+q2 pooled
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 5                      274.6666667                       54.9333333                            17.35                           0.0016
+
+Error 6                       19.0000000                        3.1666667
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.935301                         11.00730                         1.779513                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A 1                      225.3333333                      225.3333333                            71.16                           0.0002
+A*B 4                       49.3333333                       12.3333333                             3.89                           0.0681
+q3 order
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+Number of Observations Read 12
+Number of Observations Used 12
+q3 order
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 5                      274.6666667                       54.9333333                            17.35                           0.0016
+
+Error 6                       19.0000000                        3.1666667
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.935301                         11.00730                         1.779513                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A*B 2                        0.6666667                        0.3333333                             0.11                           0.9017
+A 1                      225.3333333                      225.3333333                            71.16                           0.0002
+B 2                       48.6666667                       24.3333333                             7.68                           0.0221
+q4 bar at
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+q4 bar at
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 9                      285.0000000                       31.6666667                             7.31                           0.1261
+
+Error 2                        8.6666667                        4.3333333
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.970488                         12.87628                         2.081666                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A 1                      225.3333333                      225.3333333                            52.00                           0.0187
+B 2                       48.6666667                       24.3333333                             5.62                           0.1512
+A*B 2                        0.6666667                        0.3333333                             0.08                           0.9286
+C 1                        5.3333333                        5.3333333                             1.23                           0.3828
+A*C 1                        0.3333333                        0.3333333                             0.08                           0.8075
+B*C 2                        4.6666667                        2.3333333                             0.54                           0.6500
+q5 bar nested
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+q5 bar nested
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 11                      293.6666667                       26.6969697 . .
+
+Error 0                        0.0000000 .
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        1.000000 . .                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A 1                      225.3333333                      225.3333333 . .
+B(A) 4                       49.3333333                       12.3333333 . .
+C 1                        5.3333333                        5.3333333 . .
+A*C 1                        0.3333333                        0.3333333 . .
+B*C(A) 4                       13.3333333                        3.3333333 . .
+q6 intercept only
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+q6 intercept only
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                      3136.333333                      3136.333333                           117.48 <.0001
+
+Error 11                       293.666667                        26.696970
+
+Uncorrected Total 12                      3430.000000
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.000000                         31.96027                         5.166911                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+Intercept 1                      3136.333333                      3136.333333                           117.48 <.0001
+q7 int
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+Number of Observations Read 12
+Number of Observations Used 12
+q7 int
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      3410.333333                       852.583333                           346.81 <.0001
+
+Error 8                        19.666667                         2.458333
+
+Uncorrected Total 12                      3430.000000
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.933031                         9.698396                         1.567907                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+Intercept 1                      3136.333333                      3136.333333                          1275.80 <.0001
+A 1                       225.333333                       225.333333                            91.66 <.0001
+B 2                        48.666667                        24.333333                             9.90                           0.0069
+q8 nouni
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+q9 ref
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 2 1
+
+B 3 2 3 1
+
+Number of Observations Read 12
+Number of Observations Used 12
+q9 ref
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 3                      274.0000000                       91.3333333                            37.15 <.0001
+
+Error 8                       19.6666667                        2.4583333
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.933031                         9.698396                         1.567907                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A 1                      225.3333333                      225.3333333                            91.66 <.0001
+B 2                       48.6666667                       24.3333333                             9.90                           0.0069
+q11 missing level
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+Number of Observations Read 12
+Number of Observations Used 11
+q11 missing level
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 3                      292.1818182                       97.3939394 Infty <.0001
+
+Error 7                        0.0000000                        0.0000000
+
+Corrected Total 10                      292.1818182
+
+R-Square Coeff Var Root MSE y Mean
+
+                        1.000000 0 0                         16.27273
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A 1                      235.8818182                      235.8818182 Infty <.0001
+B 2                       68.5151515                       34.2575758 Infty <.0001
+q14 nested only
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+Number of Observations Read 12
+Number of Observations Used 12
+q14 nested only
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 5                      274.6666667                       54.9333333                            17.35                           0.0016
+
+Error 6                       19.0000000                        3.1666667
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.935301                         11.00730                         1.779513                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+B(A) 5                      274.6666667                       54.9333333                            17.35                           0.0016
+q15 crossed nested
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+C 2 1 2
+
+Number of Observations Read 12
+Number of Observations Used 12
+q15 crossed nested
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 11                      293.6666667                       26.6969697 . .
+
+Error 0                        0.0000000 .
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        1.000000 . .                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A 1                      225.3333333                      225.3333333 . .
+B(A) 4                       49.3333333                       12.3333333 . .
+B*C(A) 6                       19.0000000                        3.1666667 . .
+q16 truncate
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+L 2 abcdefghijklmnop zz
+
+Number of Observations Read 6
+Number of Observations Used 6
+q16 truncate
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 1                      30.08333333                      30.08333333                            13.01                           0.0226
+
+Error 4                       9.25000000                       2.31250000
+
+Corrected Total 5                      39.33333333
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.764831                         35.09286                         1.520691                         4.333333
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+L 1                      30.08333333                      30.08333333                            13.01                           0.0226
+q17 no truncate
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+L 3 abcdefghijklmnopqX abcdefghijklmnopqY zz
+
+Number of Observations Read 6
+Number of Observations Used 6
+q17 no truncate
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 2                      32.33333333                      16.16666667                             6.93                           0.0751
+
+Error 3                       7.00000000                       2.33333333
+
+Corrected Total 5                      39.33333333
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.822034                         35.25058                         1.527525                         4.333333
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+L 2                      32.33333333                      16.16666667                             6.93                           0.0751
+q18 ref first global B
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+B 3 1 2 3
+
+Number of Observations Read 12
+Number of Observations Used 12
+q18 ref first global B
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 2                       48.6666667                       24.3333333                             0.89                           0.4425
+
+Error 9                      245.0000000                       27.2222222
+
+Corrected Total 11                      293.6666667
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.165721                         32.27315                         5.217492                         16.16667
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+B 2                      48.66666667                      24.33333333                             0.89                           0.4425
+q20 latin
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+r 3 1 2 3
+
+c 3 1 2 3
+
+t 3 A B C
+
+Number of Observations Read 9
+Number of Observations Used 9
+q20 latin
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 6                      28.00000000                       4.66666667                             1.17                           0.5295
+
+Error 2                       8.00000000                       4.00000000
+
+Corrected Total 8                      36.00000000
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.777778                         31.57895                         2.000000                         6.333333
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+r 2                       2.00000000                       1.00000000                             0.25                           0.8000
+c 2                       0.00000000                       0.00000000                             0.00                           1.0000
+t 2                      26.00000000                      13.00000000                             3.25                           0.2353
+q22 unbalanced
+
+The ANOVA Procedure
+
+Class Level Information
+
+Class Levels Values
+
+A 2 1 2
+
+B 3 1 2 3
+
+Number of Observations Read 10
+Number of Observations Used 10
+q22 unbalanced
+
+The ANOVA Procedure
+
+Dependent Variable: y
+
+Sum of
+Source DF Squares Mean Square F Value Pr > F
+
+Model 4                      210.6000000                       52.6500000                            15.49                           0.0051
+
+Error 5                       17.0000000                        3.4000000
+
+Corrected Total 9                      227.6000000
+
+R-Square Coeff Var Root MSE y Mean
+
+                        0.925308                         10.72040                         1.843909                         17.20000
+
+Source DF Anova SS Mean Square F Value Pr > F
+
+A 1                      163.3500000                      163.3500000                            48.04                           0.0010
+B 2                       48.6000000                       24.3000000                             7.15                           0.0342
+A*B 1                        0.0000000                        0.0000000                             0.00                           1.0000

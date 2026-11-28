@@ -1,4 +1,4 @@
-//! STAT-ANOVA-001 permanent checks: PROC ANOVA declarations, defaults, loud
+//! STAT-ANOVA-001 and STAT-ANOVA-003 permanent checks: PROC ANOVA declarations, defaults, loud
 //! boundaries, BY/FREQ and missing-value rules (S154 physical pp.1115–1119,
 //! 1138–1139). All data are invented; every expected number is hand-derived
 //! from group means in the comment beside it, never copied from a run.
@@ -116,6 +116,7 @@ test "ANOVA001 invalid declarations are user errors, not gaps" {
         "proc anova; model y=g; class g; run;", // CLASS must precede MODEL
         "proc anova; class g; model y=g; model y=g; run;", // one MODEL only
         "proc anova; class g; model y=g / ss3; run;", // GLM-only MODEL option
+        "proc anova; class g; model y=g x; run;", // SAS: No continuous effects allowed
         "proc anova; class g; model y=g; weight f; run;", // no WEIGHT in ANOVA
         "proc anova; class g; model y=g; lsmeans g; run;",
         "proc anova; class g; model y=g; freq f y; run;",
@@ -149,12 +150,8 @@ test "ANOVA001 valid features owned by later tickets fail loudly as gaps" {
         "proc anova; class g; model y x=g; repeated t 2; run;",
         "proc anova; class g; model y=g; test h=g e=g; run;",
         "proc anova; absorb g; class g; model y=g; run;",
-        "proc anova; class g / truncate; model y=g; run;",
-        "proc anova; class g(ref=first); model y=g; run;",
-        "proc anova; class g; model y=g / nouni; run;",
-        "proc anova; class g; model y=g / int; run;",
-        "proc anova; class g; model y=g x; run;", // continuous effect
         "proc anova; class g; model y x=g; run; manova h=g; run;", // interactive (MEANS is implemented)
+        "proc anova; class g; model y=g / effectsize; run;", // STAT-ANOVA-003 remainder
     }) |text| {
         const code = try exitOf(a, ds, text);
         if (code != 2) std.debug.print("program: {s}\n", .{text});
@@ -300,7 +297,7 @@ test "ANOVA001 BY groups: boundaries, per-group levels and counts, sort checking
     try t.expectEqual(@as(u8, 1), try exitOf(a, unsorted, "proc anova; by nosuch; class g; model y=g; run;"));
 }
 
-test "ANOVA001 balanced crossing uses ANOVA SS; unbalanced multi-effect designs stay loud" {
+test "ANOVA001 balanced crossing uses ANOVA SS; unbalanced multi-effect designs run with the SAS warning (STAT-ANOVA-003)" {
     var arena = std.heap.ArenaAllocator.init(t.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -312,7 +309,11 @@ test "ANOVA001 balanced crossing uses ANOVA SS; unbalanced multi-effect designs 
     const cx = e.cx(a);
     const spec = try anova.parse(cx, try lex.tokenize(a, "proc anova; class a b; model y=a b; run;", &e.diags));
     const d = try anova.build(cx, spec, try selection.View.init(a, spec.input, .{}), spec.responses[0]);
-    try t.expect(try anova.balanced(a, spec, d));
+    const ss = try anova.ssTable(cx, spec, d);
+    try t.expect(!ss.unequal);
+    try close(16, ss.effects[0].ss);
+    try close(4, ss.effects[1].ss);
+    try close(1, ss.sse);
     var fit = try glm.fitDesign(cx, spec, d);
     defer fit.deinit(a);
     try close(16, fit.type_i[0].ss);
@@ -322,9 +323,10 @@ test "ANOVA001 balanced crossing uses ANOVA SS; unbalanced multi-effect designs 
     const text = try listing(a, ds, "proc anova; class b a; model y=b a; run;");
     try has(text, "\nb 2 1 2\n\na 2 1 2\n");
     const lopsided = try table(a, "u", &.{ "a", "b", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 1, 2 }, .{ 1, 2, 2 }, .{ 2, 1, 4 }, .{ 2, 2, 7 }, .{ 2, 2, 9 }, .{ 1, 2, 3 } });
-    try t.expectEqual(@as(u8, 2), try exitOf(a, lopsided, "proc anova; class a b; model y=a b; run;"));
+    // SAS 9.4 reference: unequal cells print the tables after a WARNING.
+    try t.expectEqual(@as(u8, 0), try exitOf(a, lopsided, "proc anova; class a b; model y=a b; run;"));
     const hole = try table(a, "h", &.{ "a", "b", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 2, 2 }, .{ 2, 1, 4 }, .{ 1, 1, 3 }, .{ 1, 2, 5 }, .{ 2, 1, 6 } });
-    try t.expectEqual(@as(u8, 2), try exitOf(a, hole, "proc anova; class a b; model y=a b; run;"));
+    try t.expectEqual(@as(u8, 0), try exitOf(a, hole, "proc anova; class a b; model y=a b; run;"));
 }
 
 // ---- STAT-ANOVA-007: MEANS statement (S154 physical pp.1123–1129) ----
@@ -706,7 +708,8 @@ test "ANOVA001 duplicate declarations, empty BY groups and ANOVA-labelled reader
     const before = e.diags.list.items.len;
     try t.expectError(error.ParseError, anova.parse(cx, try lex.tokenize(a, "proc anova data=s; class g; model y=g nosuch; run;", &e.diags)));
     for (e.diags.list.items[before..]) |item| try t.expect(std.mem.indexOf(u8, item.message, "PROC GLM") == null);
-    try t.expectEqualStrings("PROC ANOVA: variable nosuch not found", e.diags.list.items[e.diags.list.items.len - 1].message);
+    // STAT-ANOVA-003: ANOVA reads its own effects with the SAS 9.4 wording.
+    try t.expectEqualStrings("Variable nosuch not found.", e.diags.list.items[e.diags.list.items.len - 1].message);
     // A BY group without valid observations is an ERROR for that group only:
     // u=1 and u=3 still print (SAS reference), and the exit class is 1.
     const e2 = try env(a, ds);
@@ -743,4 +746,166 @@ test "ANOVA001 NAMELEN shortens effect names as SAS does; unverified shapes stay
     try has(try listing(a, small, "proc anova; class a b; model y=b|a; run;"), "\na*b 1 ");
     // Nested effects with long names are not SAS-verified: loud gap.
     try t.expectEqual(@as(u8, 2), try exitOf(a, mixed, "proc anova; class g anotherveryveryverylongname_bbb; model y=g anotherveryveryverylongname_bbb(g); run;"));
+}
+
+// ---- STAT-ANOVA-003: CLASS / MODEL / Specification of Effects (S154 physical pp.1118–1119, 1129, 1135–1138) ----
+
+/// Listing with runs of blanks collapsed, for token-level assertions.
+fn squeezed(a: std.mem.Allocator, ds: *Dataset, text: []const u8) ![]const u8 {
+    const raw = try listing(a, ds, text);
+    var out: std.ArrayList(u8) = .empty;
+    for (raw) |c| {
+        if (c == ' ' and out.items.len > 0 and (out.items[out.items.len - 1] == ' ' or out.items[out.items.len - 1] == '\n')) continue;
+        if (c == '\n' and out.items.len > 0 and out.items[out.items.len - 1] == ' ') out.items[out.items.len - 1] = '\n' else try out.append(a, c);
+    }
+    return out.items;
+}
+
+fn effectNames(a: std.mem.Allocator, ds: *Dataset, text: []const u8) ![]const u8 {
+    const e = try env(a, ds);
+    const spec = try anova.parse(e.cx(a), try lex.tokenize(a, text, &e.diags));
+    var names: std.ArrayList(u8) = .empty;
+    for (spec.effects, 0..) |effect, k| {
+        if (k > 0) try names.append(a, ' ');
+        try names.appendSlice(a, effect.name);
+    }
+    return names.items;
+}
+
+test "STAT-ANOVA-003 effect grammar: crossed, nested, bar and @ expand as the guide's table" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try table(a, "s", &.{ "A", "B", "C", "D", "E", "y" }, &.{.{ 1, 1, 1, 1, 1, 1 }});
+    // p.1124 table of bar/at examples, verbatim.
+    try t.expectEqualStrings("A C(B) A*C(B)", try effectNames(a, ds, "proc anova; class A B C; model y=A | C(B); run;"));
+    try t.expectEqualStrings("A(B) C(B) A*C(B)", try effectNames(a, ds, "proc anova; class A B C; model y=A(B) | C(B); run;"));
+    try t.expectEqualStrings("A(B) B(D E)", try effectNames(a, ds, "proc anova; class A B D E; model y=A(B) | B(D E); run;"));
+    try t.expectEqualStrings("A B(A) C A*C B*C(A)", try effectNames(a, ds, "proc anova; class A B C; model y=A | B(A) | C; run;"));
+    try t.expectEqualStrings("A B(A) C A*C", try effectNames(a, ds, "proc anova; class A B C; model y=A | B(A) | C@2; run;"));
+    try t.expectEqualStrings("A B A*B C A*C B*C D A*D B*D C*D", try effectNames(a, ds, "proc anova; class A B C D; model y=A | B | C | D@2; run;"));
+    try t.expectEqualStrings("A B A*B C A*C B*C A*B*C", try effectNames(a, ds, "proc anova; class A B C; model y=A|B|C; run;"));
+    // p.1123: crossed list first, nesting list in parentheses, CLASS order names.
+    try t.expectEqualStrings("A B(A) C*D(A B)", try effectNames(a, ds, "proc anova; class A B C D; model y=A B(A) D*C(B A); run;"));
+    // SAS 9.4 reference: A A and A*A are one effect A; A(A) is accepted.
+    try t.expectEqualStrings("A", try effectNames(a, ds, "proc anova; class A; model y=A A; run;"));
+    try t.expectEqualStrings("A", try effectNames(a, ds, "proc anova; class A; model y=A*A; run;"));
+    try t.expectEqualStrings("A(A)", try effectNames(a, ds, "proc anova; class A; model y=A(A); run;"));
+    try t.expectEqualStrings("", try effectNames(a, ds, "proc anova; class A; model y=; run;"));
+    // Variables of an effect are its crossed and nesting columns in CLASS order.
+    const e = try env(a, ds);
+    const spec = try anova.parse(e.cx(a), try lex.tokenize(a, "proc anova; class A B C; model y=C*B(A); run;", &e.diags));
+    try t.expectEqualSlices(usize, &.{ 0, 1, 2 }, spec.effects[0].variables);
+}
+
+test "STAT-ANOVA-003 nested and pooled sums of squares follow the cell-total rules, independent of order" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // A=1: B=1 {1,3}, B=2 {5,7}; A=2: B=1 {2,2}, B=2 {8,12}. N=8, sum 40,
+    // CF=200, USS=300, SST=100. A totals 16,24 (n=4): 64+144-200 = 8.
+    // A*B cells 4,12,4,20 (n=2): 8+72+8+200-200 = 88, so B(A) = 88-8 = 80,
+    // DF 4-1-1 = 2. SSE = 100-88 = 12 on 8-1-3 = 4 DF.
+    const ds = try table(a, "n", &.{ "a", "b", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 1, 3 }, .{ 1, 2, 5 }, .{ 1, 2, 7 }, .{ 2, 1, 2 }, .{ 2, 1, 2 }, .{ 2, 2, 8 }, .{ 2, 2, 12 } });
+    for ([_][]const u8{ "model y=a b(a);", "model y=b(a) a;", "model y=a a*b;", "model y=a*b a;" }) |model| {
+        const e = try env(a, ds);
+        const cx = e.cx(a);
+        const spec = try anova.parse(cx, try lex.tokenize(a, try std.fmt.allocPrint(a, "proc anova; class a b; {s} run;", .{model}), &e.diags));
+        const d = try anova.build(cx, spec, try selection.View.init(a, spec.input, .{}), spec.responses[0]);
+        const s = try anova.ssTable(cx, spec, d);
+        const ia: usize = if (spec.effects[0].variables.len == 1) 0 else 1;
+        try close(8, s.effects[ia].ss);
+        try close(1, s.effects[ia].df);
+        try close(80, s.effects[1 - ia].ss);
+        try close(2, s.effects[1 - ia].df);
+        try close(88, s.model_ss);
+        try close(12, s.sse);
+        try close(4, s.error_df);
+        try t.expect(!s.unequal);
+    }
+    // Without the main effect A the nested effect takes all 88 on 3 DF (p.1125).
+    const e = try env(a, ds);
+    const cx = e.cx(a);
+    const spec = try anova.parse(cx, try lex.tokenize(a, "proc anova; class a b; model y=b(a); run;", &e.diags));
+    const s = try anova.ssTable(cx, spec, try anova.build(cx, spec, try selection.View.init(a, spec.input, .{}), spec.responses[0]));
+    try close(88, s.effects[0].ss);
+    try close(3, s.effects[0].df);
+    // Listing order is the MODEL order; F = 40/3 = 13.33, 8/3 = 2.67.
+    const text = try squeezed(a, ds, "proc anova; class a b; model y=b(a) a; run;");
+    try has(text, "\nb(a) 2 80.00000000 40.00000000 13.33 ");
+    try has(text, "\na 1 8.00000000 8.00000000 2.67 ");
+}
+
+test "STAT-ANOVA-003 INT, intercept-only, NOUNI and the zero-error displays" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Same data: CF = 200 on 1 DF, USS = 300 on N = 8 DF.
+    const ds = try table(a, "n", &.{ "a", "b", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 1, 3 }, .{ 1, 2, 5 }, .{ 1, 2, 7 }, .{ 2, 1, 2 }, .{ 2, 1, 2 }, .{ 2, 2, 8 }, .{ 2, 2, 12 } });
+    // INT: Model = 200+8 on 2 DF; error 92 on 6 DF (MSE 15.333); F(Int) = 200/15.333 = 13.04.
+    const int = try squeezed(a, ds, "proc anova; class a; model y=a / int; run;");
+    try has(int, "\nModel 2 208.0000000 104.0000000 6.78 ");
+    try has(int, "\nUncorrected Total 8 300.0000000\n");
+    try has(int, "\nIntercept 1 200.0000000 200.0000000 13.04 ");
+    // R-Square stays corrected: 8/100.
+    try has(int, "\n0.080000 ");
+    // No effects: the intercept alone, R-Square 0 (SAS reference shape).
+    const only = try squeezed(a, ds, "proc anova; class a; model y=; run;");
+    try has(only, "\nModel 1 200.0000000 200.0000000 14.00 ");
+    try has(only, "\nIntercept 1 ");
+    try has(only, "\n0.000000 ");
+    // NOUNI: Class Level Information and counts only.
+    const quiet = try squeezed(a, ds, "proc anova; class a; model y=a / nouni; run;");
+    try t.expect(std.mem.indexOf(u8, quiet, "Number of Observations Used 8") != null);
+    try t.expect(std.mem.indexOf(u8, quiet, "Dependent Variable") == null);
+}
+
+test "STAT-ANOVA-003 REF= moves the reference level last; TRUNCATE merges on 16 characters" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try table(a, "n", &.{ "a", "b", "y" }, &.{ .{ 1, 1, 1 }, .{ 1, 2, 3 }, .{ 1, 3, 5 }, .{ 2, 1, 7 }, .{ 2, 2, 2 }, .{ 2, 3, 2 } });
+    try has(try squeezed(a, ds, "proc anova; class a(ref='1') b / ref=first; model y=a b; run;"), "\na 2 2 1\n\nb 3 2 3 1\n");
+    try has(try squeezed(a, ds, "proc anova; class a(ref=last) b(ref='2'); model y=a b; run;"), "\na 2 1 2\n\nb 3 1 3 2\n");
+    // MEANS follows the reordered levels (SAS reference r1).
+    const means = try squeezed(a, ds, "proc anova; class b(ref=first); model y=b; means b; run;");
+    try t.expect(std.mem.indexOf(u8, means, "\n2 2 ").? < std.mem.indexOf(u8, means, "\n1 2 ").?);
+    // Unknown reference level: SAS 9.4 message, user error.
+    try t.expectEqual(@as(u8, 1), try exitOf(a, ds, "proc anova; class a(ref='9'); model y=a; run;"));
+}
+
+test "STAT-ANOVA-003 invalid models are user errors with SAS wording; EFFECTSIZE stays a loud gap" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try table(a, "n", &.{ "a", "b", "x", "y" }, &.{ .{ 1, 1, 1, 1 }, .{ 1, 2, 2, 3 }, .{ 2, 1, 3, 5 }, .{ 2, 2, 4, 6 } });
+    for ([_][2][]const u8{
+        .{ "proc anova; class a; model y=a x; run;", "No continuous effects allowed in PROC ANOVA." },
+        .{ "proc anova; class b; model y=b(a); run;", "Nesting of continuous variable not allowed." },
+        .{ "proc anova; class a; model y=a / solution; run;", "Syntax error, expecting one of the following: ;, EFFECTSIZE, INTERCEPT, NOUNI." },
+        .{ "proc anova; class a(ref='9'); model y=a; run;", "Invalid reference value for a." },
+        .{ "proc anova; class a; model y=nosuch; run;", "Variable nosuch not found." },
+        .{ "proc anova; class a b; model y=a|b@0; run;", "@ degree must be positive" },
+        .{ "proc anova; class a b; model y=a b(); run;", "invalid nested effect" },
+        .{ "proc anova; class a b; model y=a*; run;", "invalid effect specification" },
+        .{ "proc anova; class a(ref=2); model y=a; run;", "CLASS REF= requires a quoted level, FIRST or LAST" },
+        .{ "proc anova; class a / ref='1'; model y=a; run;", "CLASS global options are REF=FIRST | LAST and TRUNCATE" },
+    }) |case| {
+        const e = try env(a, ds);
+        diag.resetGap();
+        defer diag.resetGap();
+        var out: std.ArrayList(u8) = .empty;
+        if (anova.run(e.cx(a), &out, try lex.tokenize(a, case[0], &e.diags))) |_| return error.TestExpectedError else |_| {}
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), e.diags.hasErrors()));
+        var found = false;
+        for (e.diags.list.items) |item| if (std.mem.indexOf(u8, item.message, case[1]) != null) {
+            found = true;
+        };
+        if (!found) std.debug.print("program: {s}\n", .{case[0]});
+        try t.expect(found);
+        try t.expectEqual(@as(usize, 0), out.items.len);
+    }
+    try t.expectEqual(@as(u8, 2), try exitOf(a, ds, "proc anova; class a; model y=a / effectsize; run;"));
+    // Same variables through two different effects: loud, not double-counted.
+    try t.expectEqual(@as(u8, 2), try exitOf(a, ds, "proc anova; class a b; model y=a*b b(a); run;"));
 }
