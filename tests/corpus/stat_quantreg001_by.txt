@@ -1,0 +1,88 @@
+
+                                  _oracle_by=1
+
+The QUANTREG Procedure
+
+                  Model Information
+
+Data Set                           WORK._ORACLE_INPUT
+Dependent Variable                                  y
+Number of Independent Variables                     2
+Number of Observations                           1000
+Optimization Algorithm                        Simplex
+Method for Confidence Limits                 Inv_Rank
+
+
+Number of Observations Read        1000
+Number of Observations Used        1000
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x1            -0.6546      0.0230      0.7099      0.0222       0.9933      1.0085
+x2            -0.7891     -0.0747      0.6839     -0.0401       1.0394      1.0857
+y              6.1045     10.6936     14.9569     14.4864      20.4087      6.5696
+
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.5
+Objective Function            2441.1927
+Predicted Value at Mean         10.0259
+
+
+           Parameter Estimates
+ 
+                         95% Confidence
+Parameter DF Estimate        Limits
+
+Intercept  1  10.0364    9.9959   10.0756
+x1         1   5.0106    4.9602    5.0388
+x2         1   3.0294    2.9944    3.0630
+
+                                  _oracle_by=2
+
+The QUANTREG Procedure
+
+                  Model Information
+
+Data Set                           WORK._ORACLE_INPUT
+Dependent Variable                                  y
+Number of Independent Variables                     2
+Number of Observations                           1000
+Optimization Algorithm                        Simplex
+Method for Confidence Limits                 Inv_Rank
+
+
+Number of Observations Read        1000
+Number of Observations Used        1000
+
+
+                                Summary Statistics
+ 
+                                                              Standard
+Variable           Q1      Median          Q3        Mean    Deviation         MAD
+
+x1            -0.6546      0.0230      0.7099      0.0222       0.9933      1.0085
+x2            -0.7891     -0.0747      0.6839     -0.0401       1.0394      1.0857
+y              6.1045     10.6936     14.9569     14.4864      20.4087      6.5696
+
+
+ Quantile Level and Objective Function
+
+Quantile Level                      0.5
+Objective Function            2441.1927
+Predicted Value at Mean         10.0259
+
+
+           Parameter Estimates
+ 
+                         95% Confidence
+Parameter DF Estimate        Limits
+
+Intercept  1  10.0364    9.9959   10.0756
+x1         1   5.0106    4.9602    5.0388
+x2         1   3.0294    2.9944    3.0630
