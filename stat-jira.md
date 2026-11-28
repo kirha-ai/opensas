@@ -4,8 +4,15 @@
 
 This section is the only current status summary; every section below it is a historical log. Update it after each integration, verification and handoff.
 
-- **State:** ACTIVE on explicit user resume. Batch 5 (seven tickets assigned 2026-11-28T04:44:17Z, all handed back before the 05:29:17Z deadline) is integrated, verified and pushed. No DOING ticket at this commit; the next assignments are recorded here when dispatched. Coordinator keep-awake: `caffeinate -i -s` PID 62218.
-- **Counts:** 53 DONE, 67 PARK, 0 DOING, 1302 TODO.
+- **State:** ACTIVE on explicit user resume. Batch 5 is integrated, verified and pushed (below). Batch 6: seven dev slots assigned 2026-11-28T05:03:56+00:00; implementation deadline 2026-11-28T05:48:56+00:00 (45 minutes, not reset by handoff or steering). Heavy builds limited to two at a time machine-wide. Coordinator keep-awake: `caffeinate -i -s` PID 62218.
+  - dev1: STAT-PLM-002; `/Users/thomas/kirha/opensas-dev1`; branch `stat-b6/plm002-dev1` from the tip that records this assignment.
+  - dev2: STAT-GLIMMIX-002; `/Users/thomas/kirha/opensas-dev2`; branch `stat-b6/glimmix002-dev2` from the tip that records this assignment.
+  - dev3: STAT-FREQ-015; `/Users/thomas/kirha/opensas-dev3`; branch `stat-b6/freq015-dev3` from the tip that records this assignment.
+  - dev4: STAT-ANOVA-007; `/Users/thomas/kirha/opensas-dev4`; branch `stat-b6/anova007-dev4` from the tip that records this assignment.
+  - dev5: STAT-LIFETEST-002; `/Users/thomas/kirha/opensas-dev5`; branch `stat-b6/lifetest002-dev5` from the tip that records this assignment.
+  - dev6: STAT-PHREG-002; `/Users/thomas/kirha/opensas-dev6`; branch `stat-b6/phreg002-dev6` from the tip that records this assignment.
+  - dev7: STAT-GENMOD-002; `/Users/thomas/kirha/opensas-dev7`; branch `stat-b6/genmod002-dev7` from the tip that records this assignment.
+- **Counts:** 53 DONE, 67 PARK, 7 DOING, 1295 TODO.
 - **Working branch:** `feat/stat/batch-4`. Tested and pushed code SHA `470bdc33c8b8e070e4a4d7c5fbbf3f26ccaec8b5` (origin moved `0095ed9b`/`bc9eb62d` → `470bdc33`). Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
 - **Integration method:** seven branches `stat-b5/<ticket>-devN` from `bbf110dd`, applied serially by `git cherry-pick` (17 commits) in the order GENMOD-001, PLM-001, GLIMMIX-001, PHREG-001, ANOVA-001, FREQ-014, LIFETEST-001. Two additive conflicts (PHREG in `src/main.zig`/`src/root.zig`, LIFETEST in `src/root.zig`: adjacent registration lines) were resolved by keeping every line of both sides; nothing else was hand-edited.
@@ -1953,7 +1960,7 @@ Source: S154, Chapter 29, `The ANOVA Procedure`, PDF pp. 1105–1162. Tasks in t
 
 <a id="stat-anova-007"></a>
 
-### [TODO] STAT-ANOVA-007 — ANOVA — MEANS
+### [DOING @dev4] STAT-ANOVA-007 — ANOVA — MEANS
 
 - Source: S154 / Chapter 29 / `MEANS Statement` (PDF pp. 1123–1129).
 - Scope: Implement MEANS. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -4287,7 +4294,7 @@ Source: S154, Chapter 47, `The FREQ Procedure`, PDF pp. 3069–3290. Tasks in th
 
 <a id="stat-freq-015"></a>
 
-### [TODO] STAT-FREQ-015 — FREQ — Gail-Simon Test for Qualitative Interactions
+### [DOING @dev3] STAT-FREQ-015 — FREQ — Gail-Simon Test for Qualitative Interactions
 
 - Source: S154 / Chapter 47 / `Gail-Simon Test for Qualitative Interactions` (PDF pp. 3233–3234).
 - Scope: Implement Gail-Simon Test for Qualitative Interactions. This ticket owns the feature's options, defaults, computation, and results as an extension of the basic computational path; the chapter's output tickets handle ODS descriptors and file presentation.
@@ -4790,7 +4797,7 @@ Source: S154, Chapter 51, `The GENMOD Procedure`, PDF pp. 3481–3686. Tasks in 
 
 <a id="stat-genmod-002"></a>
 
-### [TODO] STAT-GENMOD-002 — GENMOD — Default generalized linear model estimation and inference
+### [DOING @dev7] STAT-GENMOD-002 — GENMOD — Default generalized linear model estimation and inference
 
 - Source: S154 / Chapter 51 / `Getting Started: GENMOD Procedure` (PDF pp. 3489–3508); S154 / Chapter 51 / `Overview: GENMOD Procedure` (PDF pp. 3483–3489); S154 / Chapter 9 / `Introduction to Categorical Data Analysis Procedures` (PDF pp. 187–198).
 - Scope: Implement default generalized linear model estimation and inference using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -5034,7 +5041,7 @@ Source: S154, Chapter 52, `The GLIMMIX Procedure`, PDF pp. 3687–4042. Tasks in
 
 <a id="stat-glimmix-002"></a>
 
-### [TODO] STAT-GLIMMIX-002 — GLIMMIX — Default generalized linear mixed model estimation
+### [DOING @dev2] STAT-GLIMMIX-002 — GLIMMIX — Default generalized linear mixed model estimation
 
 - Source: S154 / Chapter 52 / `Getting Started: GLIMMIX Procedure` (PDF pp. 3696–3702); S154 / Chapter 52 / `Overview: GLIMMIX Procedure` (PDF pp. 3690–3696).
 - Scope: Implement default generalized linear mixed model estimation using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -8517,7 +8524,7 @@ Source: S154, Chapter 77, `The LIFETEST Procedure`, PDF pp. 5639–5754. Tasks i
 
 <a id="stat-lifetest-002"></a>
 
-### [TODO] STAT-LIFETEST-002 — LIFETEST — Nonparametric survival distributions and group comparisons
+### [DOING @dev5] STAT-LIFETEST-002 — LIFETEST — Nonparametric survival distributions and group comparisons
 
 - Source: S154 / Chapter 77 / `Getting Started: LIFETEST Procedure` (PDF pp. 5641–5649); S154 / Chapter 77 / `Overview: LIFETEST Procedure` (PDF pp. 5640–5641).
 - Scope: Implement nonparametric survival distributions and group comparisons using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -10957,7 +10964,7 @@ Source: S154, Chapter 92, `The PHREG Procedure`, PDF pp. 7311–7582. Tasks in t
 
 <a id="stat-phreg-002"></a>
 
-### [TODO] STAT-PHREG-002 — PHREG — Partial likelihood estimation for proportional hazards regression
+### [DOING @dev6] STAT-PHREG-002 — PHREG — Partial likelihood estimation for proportional hazards regression
 
 - Source: S154 / Chapter 92 / `Getting Started: PHREG Procedure` (PDF pp. 7315–7323); S154 / Chapter 92 / `Overview: PHREG Procedure` (PDF pp. 7313–7315).
 - Scope: Implement partial likelihood estimation for proportional hazards regression using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
@@ -11327,7 +11334,7 @@ Source: S154, Chapter 94, `The PLM Procedure`, PDF pp. 7617–7674. Tasks in thi
 
 <a id="stat-plm-002"></a>
 
-### [TODO] STAT-PLM-002 — PLM — Postprocessing and inference for stored models
+### [DOING @dev1] STAT-PLM-002 — PLM — Postprocessing and inference for stored models
 
 - Source: S154 / Chapter 94 / `Getting Started: PLM Procedure` (PDF pp. 7620–7627); S154 / Chapter 94 / `Overview: PLM Procedure` (PDF pp. 7618–7620).
 - Scope: Implement postprocessing and inference for stored models using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
