@@ -1,0 +1,5 @@
+# corpus assertions
+empty-listing
+stderr-count 1 only one MODEL statement is allowed
+stderr-count 1 effect variable h is not in the CLASS statement
+stderr-count 1 FIXED= exceeds the number of effects

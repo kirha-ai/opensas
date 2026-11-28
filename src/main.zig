@@ -3101,6 +3101,13 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
             try out.appendSlice(a, body.items);
             try g.emitFootnotes(a, out);
         }
+    } else if (eqi(proc, "varcomp")) {
+        // Titles and BY lines are emitted per BY group by the procedure.
+        var varcomp_context = pcx;
+        varcomp_context.listing_titles = g;
+        var body: std.ArrayList(u8) = .empty;
+        try sas.varcomp.run(varcomp_context, &body, toks);
+        try out.appendSlice(a, body.items);
     } else if (eqi(proc, "lifereg")) {
         var body: std.ArrayList(u8) = .empty;
         try sas.lifereg.run(pcx, &body, toks);

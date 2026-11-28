@@ -37,6 +37,7 @@ pub const princomp = @import("stat/princomp.zig");
 pub const surveyfreq = @import("stat/surveyfreq.zig");
 pub const glmselect = @import("stat/glmselect.zig");
 pub const quantreg = @import("stat/quantreg.zig");
+pub const varcomp = @import("stat/varcomp.zig");
 pub const lifereg = @import("stat/lifereg.zig");
 pub const multtest = @import("stat/multtest.zig");
 pub const mianalyze = @import("stat/mianalyze.zig");
@@ -89,6 +90,7 @@ test {
     _ = @import("stat/surveyfreq.zig");
     _ = @import("stat/glmselect.zig");
     _ = @import("stat/quantreg.zig");
+    _ = @import("stat/varcomp.zig");
     _ = @import("stat/lifereg.zig");
     _ = @import("stat/multtest.zig");
     _ = @import("stat/mianalyze.zig");

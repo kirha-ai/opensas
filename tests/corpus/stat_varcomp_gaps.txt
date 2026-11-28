@@ -1,0 +1,3 @@
+# corpus assertions
+empty-listing
+stderr-count 1 METHOD=MIVQUE0 (the default) is not implemented
