@@ -1,7 +1,9 @@
-//! PROC PHREG (STAT-PHREG-001): PROC/MODEL/BY/FREQ/ID/STRATA/WEIGHT roles,
+//! PROC PHREG (STAT-PHREG-001/002): PROC/MODEL/BY/FREQ/ID/STRATA/WEIGHT roles,
 //! observation selection, and the Breslow partial-likelihood Newton fit for
-//! plain numeric covariates. Everything owned by later PHREG tickets (CLASS,
-//! effects, counting-process input, other TIES=, BASELINE, BAYES, programming
+//! plain numeric covariates and for time-dependent covariates defined by
+//! arithmetic assignment statements (STAT-PHREG-002, the Getting Started
+//! path). Everything owned by later PHREG tickets (CLASS, effects,
+//! counting-process input, other TIES=, BASELINE, BAYES, general programming
 //! statements, output data sets, plots) fails loud as a D-009 gap.
 //! ponytail: listing layouts that have no SAS reference yet (FREQ, WEIGHT,
 //! STRATA, no censoring variable, several censoring values, labelled
@@ -17,14 +19,27 @@ const by = @import("by_groups.zig");
 const lists = @import("variable_lists.zig");
 const missing = @import("data_selection.zig").missing;
 const chiTail = @import("logistic_fit.zig").chiTail;
+const ast = @import("../ast.zig");
+const pe = @import("../parser_expr.zig");
+const eval = @import("../eval.zig");
+const functions = @import("../functions.zig");
+const Pdv = @import("../pdv.zig").Pdv;
 const A = std.mem.Allocator;
+
+/// One programming statement `name = arithmetic;` (STAT-PHREG-002).
+pub const Assign = struct { name: []const u8, expr: *const ast.Expr };
 
 pub const Spec = struct {
     input: proc.ProcInput,
     time: usize = 0,
     censor: ?usize = null,
     censor_values: []const f64 = &.{},
-    covariates: []const usize = &.{},
+    covariates: []const usize = &.{}, // data set columns among the MODEL covariates
+    /// MODEL covariates in statement order: display name and data set column
+    /// (null = defined by a programming statement, evaluated per risk set).
+    cov_names: []const []const u8 = &.{},
+    cov_cols: []const ?usize = &.{},
+    assigns: []const Assign = &.{},
     by_cols: []const usize = &.{},
     by_desc: []const bool = &.{},
     notsorted: bool = false,
@@ -40,8 +55,8 @@ pub const Spec = struct {
 };
 
 // Documented names owned by later tickets: visible gap (rc 2), never a no-op.
-const gap_proc_options = [_][]const u8{ "atrisk", "covout", "covm", "covs", "covsandwich", "ev", "fast", "inest", "outest", "plots", "plot", "zph", "tau", "simple", "namelen", "multipass" };
-const gap_statements = [_][]const u8{ "assess", "baseline", "bayes", "class", "contrast", "effect", "estimate", "hazardratio", "lsmeans", "lsmestimate", "output", "random", "slice", "store", "test", "format", "label", "attrib", "array", "if", "do", "end", "else", "call", "select", "when", "otherwise", "goto", "link", "return" };
+const gap_proc_options = [_][]const u8{ "atrisk", "concordance", "covout", "covm", "covs", "covsandwich", "ev", "fast", "inest", "outest", "plots", "plot", "rocoptions", "zph", "tau", "simple", "namelen", "multipass" };
+const gap_statements = [_][]const u8{ "assess", "baseline", "bayes", "class", "contrast", "effect", "estimate", "hazardratio", "lsmeans", "lsmestimate", "output", "random", "roc", "slice", "store", "test", "format", "label", "attrib", "array", "if", "do", "end", "else", "call", "select", "when", "otherwise", "goto", "link", "return" };
 const gap_model_options = [_][]const u8{ "alpha", "best", "corrb", "covb", "details", "entrytime", "entry", "eventcode", "failcode", "fconv", "firth", "gconv", "hierarchy", "include", "itprint", "maxiter", "maxstep", "nofit", "offset", "pevent", "rl", "risklimits", "selection", "sequential", "singular", "slentry", "sle", "slstay", "sls", "start", "stop", "stopres", "sr", "type1", "type3", "xconv", "absfconv", "absgconv", "absxconv", "ridging", "ridgeinit" };
 
 fn eq(x: []const u8, y: []const u8) bool {
@@ -121,6 +136,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var weight: ?[]const lex.Token = null;
     var strata: ?[]const lex.Token = null;
     var ids: std.ArrayList([]const lex.Token) = .empty;
+    var programs: std.ArrayList([]const lex.Token) = .empty;
     while (i < t.len and !at(t, i, .eof)) {
         if (at(t, i, .semicolon)) {
             i += 1;
@@ -129,8 +145,9 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
         if (kw(t, i, "run") or kw(t, i, "quit")) break;
         const end = stmtEnd(t, i);
         const body = t[i + 1 .. end];
-        if (at(t, i, .name) and at(t, i + 1, .eq)) return gap(cx, t, i, "programming statement");
-        if (kw(t, i, "where")) {
+        if (at(t, i, .name) and at(t, i + 1, .eq)) {
+            try programs.append(a, t[i..end]);
+        } else if (kw(t, i, "where")) {
             // Applied by proc.procInputObs.
         } else if (kw(t, i, "by")) {
             var j = i;
@@ -195,17 +212,66 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     }
     if (!at(m, j, .eq)) return invalid(cx, m, j);
     j += 1;
+    // Programming statements (STAT-PHREG-002): only `new_name = arithmetic;`
+    // over numeric data set variables, earlier assigned names, numeric
+    // literals, + - * / ( ) and LOG/EXP. Every other form stays a loud gap
+    // (STAT-PHREG-026 owns general programming statements).
+    var assigns: std.ArrayList(Assign) = .empty;
+    for (programs.items) |pt| {
+        if (ds.indexOf(pt[0].text) != null) return gap(cx, pt, 0, "programming statement that reassigns a data set variable");
+        for (assigns.items) |seen| if (eq(seen.name, pt[0].text)) return gap(cx, pt, 0, "repeated programming assignment");
+        const body = pt[2..];
+        if (body.len == 0) return invalid(cx, pt, 1);
+        for (body, 0..) |tok, k| switch (tok.tag) {
+            .number, .plus, .minus, .star, .slash, .lparen, .rparen => {},
+            .name => if (at(body, k + 1, .lparen)) {
+                if (!eq(tok.text, "log") and !eq(tok.text, "exp")) return gap(cx, body, k, "programming statement function");
+            } else {
+                var known = false;
+                if (ds.indexOf(tok.text)) |ci| known = ds.columns.items[ci].type == .num;
+                for (assigns.items) |seen| if (eq(seen.name, tok.text)) {
+                    known = true;
+                };
+                if (!known) return gap(cx, body, k, "programming statement operand");
+            },
+            else => return gap(cx, body, k, "programming statement syntax"),
+        };
+        const etoks = try a.alloc(lex.Token, body.len + 1);
+        @memcpy(etoks[0..body.len], body);
+        etoks[body.len] = .{ .tag = .eof };
+        var parser = pe.Parser.init(a, etoks, cx.diags);
+        const e = parser.parseExpr() catch return gap(cx, pt, 0, "programming statement expression");
+        if (parser.pos != body.len) return gap(cx, pt, 0, "programming statement expression");
+        try assigns.append(a, .{ .name = pt[0].text, .expr = e });
+    }
+    s.assigns = assigns.items;
+
     var covariates: std.ArrayList(usize) = .empty;
+    var cov_names: std.ArrayList([]const u8) = .empty;
+    var cov_cols: std.ArrayList(?usize) = .empty;
     while (j < m.len and !at(m, j, .slash)) {
         if (!at(m, j, .name)) return invalid(cx, m, j);
         if (at(m, j + 1, .star) or at(m, j + 1, .pipe) or at(m, j + 1, .lparen) or at(m, j + 1, .at)) return gap(cx, m, j, "MODEL effect");
         const start = j;
+        var computed = false;
+        for (assigns.items) |as| if (eq(as.name, m[j].text)) {
+            computed = true;
+        };
+        if (computed) {
+            for (cov_names.items) |seen| if (eq(seen, m[j].text)) return gap(cx, m, start, "repeated MODEL covariate");
+            try cov_names.append(a, m[j].text);
+            try cov_cols.append(a, null);
+            j += 1;
+            continue;
+        }
         const selected = try lists.next(a, ds, m, &j, cx.diags);
         for (selected) |n| {
             const ci = ds.indexOf(n) orelse return cx.diags.fail(error.ParseError, m[start].line, "Variable {s} not found.", .{try std.ascii.allocUpperString(a, n)});
             if (ds.columns.items[ci].type != .num) return cx.diags.fail(error.ParseError, m[start].line, "PROC PHREG: covariate {s} must be numeric (CLASS is not implemented)", .{n});
             for (covariates.items) |seen| if (seen == ci) return gap(cx, m, start, "repeated MODEL covariate");
             try covariates.append(a, ci);
+            try cov_names.append(a, ds.columns.items[ci].name);
+            try cov_cols.append(a, ci);
         }
     }
     if (at(m, j, .slash)) {
@@ -218,16 +284,18 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
             } else return invalid(cx, m, j);
         }
     }
-    if (covariates.items.len == 0) return proc.failGap(cx.diags, 0, "PROC PHREG: a MODEL without covariates is not implemented", .{});
+    if (cov_names.items.len == 0) return proc.failGap(cx.diags, 0, "PROC PHREG: a MODEL without covariates is not implemented", .{});
     s.covariates = covariates.items;
+    s.cov_names = cov_names.items;
+    s.cov_cols = cov_cols.items;
 
     if (freq) |f| {
         s.frequency = try numericCol(cx, ds, f, 0, "FREQ");
-        if (f.len == 3 and at(f, 1, .slash) and kw(f, 2, "notruncate")) s.notruncate = true else if (f.len != 1) return invalid(cx, f, 1);
+        if (f.len == 3 and at(f, 1, .slash) and (kw(f, 2, "notruncate") or kw(f, 2, "notrunc"))) s.notruncate = true else if (f.len != 1) return invalid(cx, f, 1);
     }
     if (weight) |w| {
         s.weight = try numericCol(cx, ds, w, 0, "WEIGHT");
-        if (w.len == 3 and at(w, 1, .slash) and kw(w, 2, "normalize")) return gap(cx, w, 2, "WEIGHT option");
+        if (w.len == 3 and at(w, 1, .slash) and (kw(w, 2, "normalize") or kw(w, 2, "norm"))) return gap(cx, w, 2, "WEIGHT option");
         if (w.len != 1) return invalid(cx, w, 1);
     }
     if (strata) |st| {
@@ -279,6 +347,9 @@ pub const Selected = struct {
     n_strata: usize,
     read: usize,
     p: usize,
+    /// The selected input rows (same order as `time`), for programming statements.
+    kept: []const []const Value = &.{},
+    tv: ?TimeVarying = null,
 
     pub fn used(self: Selected) usize {
         return self.time.len;
@@ -295,6 +366,14 @@ pub const Selected = struct {
         for (self.freq) |f| n += f;
         return n;
     }
+};
+
+/// Covariate values per (distinct event time k, observation o): `x` is
+/// K×used×p. Entries of observations no longer at risk at `times[k]` are
+/// never read.
+pub const TimeVarying = struct {
+    times: []const f64,
+    x: []const f64,
 };
 
 fn strataLess(cols: []const usize, lhs: []const Value, rhs: []const Value) bool {
@@ -349,7 +428,7 @@ pub fn prepare(a: A, s: Spec, rows: []const []const Value) !Selected {
         };
         try time.append(a, row[s.time].num);
         try event.append(a, is_event);
-        for (s.covariates) |c| try x.append(a, row[c].num);
+        for (s.cov_cols) |c| try x.append(a, if (c) |ci| row[ci].num else 0);
         try freq.append(a, f);
         try weight.append(a, w);
         try kept.append(a, row);
@@ -376,7 +455,97 @@ pub fn prepare(a: A, s: Spec, rows: []const []const Value) !Selected {
         }
         n_strata = reps.items.len;
     }
-    return .{ .time = time.items, .event = event.items, .x = x.items, .freq = freq.items, .weight = weight.items, .stratum = stratum, .n_strata = n_strata, .read = rows.len, .p = s.covariates.len };
+    return .{ .time = time.items, .event = event.items, .x = x.items, .freq = freq.items, .weight = weight.items, .stratum = stratum, .n_strata = n_strata, .read = rows.len, .p = s.cov_cols.len, .kept = kept.items };
+}
+
+/// Time-dependent covariates (S154 Chapter 92, Getting Started): "At each
+/// event time, subjects in the risk set ... have their X values changed
+/// accordingly" -- the assignments are evaluated for every observation at risk
+/// at every distinct event time, with the failure-time variable holding that
+/// event time and every other variable holding the observation's own value.
+/// ponytail: dense K×n×p table and one PDV load per (event time, row); a
+/// risk-set-streaming version belongs to MULTIPASS/FAST if ever needed.
+pub fn timeVarying(cx: proc.ProcCtx, s: Spec, sel: Selected) diag.Error!TimeVarying {
+    const a = cx.arena;
+    const cols = s.input.ds.columns.items;
+    var times: std.ArrayList(f64) = .empty;
+    for (sel.time, sel.event) |t, e| if (e) {
+        var seen = false;
+        for (times.items) |u| {
+            if (u == t) seen = true;
+        }
+        if (!seen) try times.append(a, t);
+    };
+    const n = sel.used();
+    const p = sel.p;
+    const x = try a.alloc(f64, times.items.len * n * p);
+    @memset(x, 0);
+    var pdv = Pdv.init(a);
+    var ev: eval.Evaluator = .{ .arena = a, .pdv = &pdv, .diags = cx.diags, .call_fn = &functions.dispatch };
+    for (times.items, 0..) |t, k| for (sel.kept, 0..) |row, o| {
+        if (sel.time[o] < t) continue;
+        for (cols, row) |col, v| if (col.type == .num) try pdv.set(col.name, v);
+        try pdv.set(cols[s.time].name, .{ .num = t });
+        for (s.assigns) |as| try pdv.set(as.name, try ev.eval(as.expr));
+        for (s.cov_cols, s.cov_names, 0..) |cc, name, c| {
+            const v: f64 = if (cc) |ci| row[ci].num else switch (pdv.get(name).?) {
+                .num => |value| value,
+                else => std.math.nan(f64),
+            };
+            if (!std.math.isFinite(v)) return proc.failGap(cx.diags, 0, "PROC PHREG: a missing time-dependent covariate value ({s}) is not implemented", .{name});
+            x[(k * n + o) * p + c] = v;
+        }
+    };
+    return .{ .times = times.items, .x = x };
+}
+
+/// The Breslow log partial likelihood of `evaluate` with covariates x_j(t):
+///   l(b) = sum over strata and event times t of
+///          sum over events i at t of f_i w_i x_i(t)'b - d(t) log S0(t),
+///   S0(t) = sum over j at risk at t of f_j w_j exp(x_j(t)'b).
+pub fn evaluateTv(sel: Selected, tv: TimeVarying, beta: []const f64, u: []f64, info: []f64, s1: []f64, s2: []f64) f64 {
+    const p = sel.p;
+    const n = sel.used();
+    @memset(u, 0);
+    @memset(info, 0);
+    var ll: f64 = 0;
+    for (0..sel.n_strata) |stratum| for (tv.times, 0..) |t, k| {
+        var s0: f64 = 0;
+        var d: f64 = 0;
+        @memset(s1, 0);
+        @memset(s2, 0);
+        for (0..n) |o| {
+            if (sel.stratum[o] != stratum or sel.time[o] < t) continue;
+            const xs = tv.x[(k * n + o) * p .. (k * n + o + 1) * p];
+            var eta: f64 = 0;
+            for (xs, beta) |xv, b| eta += xv * b;
+            const wt = sel.freq[o] * sel.weight[o];
+            const r = wt * @exp(eta);
+            s0 += r;
+            for (0..p) |c| {
+                s1[c] += r * xs[c];
+                for (0..p) |c2| s2[c * p + c2] += r * xs[c] * xs[c2];
+            }
+            if (sel.event[o] and sel.time[o] == t) {
+                ll += wt * eta;
+                for (0..p) |c| u[c] += wt * xs[c];
+                d += wt;
+            }
+        }
+        if (d > 0) {
+            ll -= d * @log(s0);
+            for (0..p) |c| {
+                u[c] -= d * s1[c] / s0;
+                for (0..p) |c2| info[c * p + c2] += d * (s2[c * p + c2] / s0 - s1[c] * s1[c2] / (s0 * s0));
+            }
+        }
+    };
+    return ll;
+}
+
+fn likelihood(sel: Selected, order: []const usize, beta: []const f64, u: []f64, info: []f64, s1: []f64, s2: []f64) f64 {
+    if (sel.tv) |tv| return evaluateTv(sel, tv, beta, u, info, s1, s2);
+    return evaluate(sel, order, beta, u, info, s1, s2);
 }
 
 pub const Fit = struct {
@@ -517,7 +686,7 @@ pub fn fit(a: A, sel: Selected) !Fit {
     const s2 = try a.alloc(f64, p * p);
     const trial = try a.alloc(f64, p);
     const step = try a.alloc(f64, p);
-    var ll = evaluate(sel, order, beta, u, info, s1, s2);
+    var ll = likelihood(sel, order, beta, u, info, s1, s2);
     const ll0 = ll;
     var cov = try invert(a, info, p);
     const score = quad(cov, u);
@@ -539,7 +708,7 @@ pub fn fit(a: A, sel: Selected) !Fit {
         var halvings: usize = 0;
         while (true) : (halvings += 1) {
             for (trial, beta, step) |*tv, b, sv| tv.* = b + scale * sv;
-            const next = evaluate(sel, order, trial, u, info, s1, s2);
+            const next = likelihood(sel, order, trial, u, info, s1, s2);
             if (next >= ll or halvings >= 20) {
                 ll = next;
                 break;
@@ -586,10 +755,10 @@ fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), s: Spec, sel: Selected, f: 
     for ([_][]const u8{ "Likelihood Ratio", "Score", "Wald" }, [_]f64{ m0 - m1, f.score, f.wald }) |label, value|
         try out.print(a, "{s} {s} {d} {s}\n", .{ label, try num(a, value, "12.4"), sel.p, try num(a, chiTail(value, sel.p), "pvalue6.4") });
     try out.appendSlice(a, "\nAnalysis of Maximum Likelihood Estimates\n\nParameter Standard Hazard\nParameter DF Estimate Error Chi-Square Pr > ChiSq Ratio\n\n");
-    for (s.covariates, 0..) |ci, k| {
+    for (s.cov_names, 0..) |name, k| {
         const se = @sqrt(f.cov[k * sel.p + k]);
         const chi = (f.beta[k] / se) * (f.beta[k] / se);
-        try out.print(a, "{s} 1 {s} {s} {s} {s} {s}\n", .{ cols[ci].name, try num(a, f.beta[k], "12.5"), try num(a, se, "12.5"), try num(a, chi, "12.4"), try num(a, chiTail(chi, 1), "pvalue6.4"), try num(a, @exp(f.beta[k]), "12.3") });
+        try out.print(a, "{s} 1 {s} {s} {s} {s} {s}\n", .{ name, try num(a, f.beta[k], "12.5"), try num(a, se, "12.5"), try num(a, chi, "12.4"), try num(a, chiTail(chi, 1), "pvalue6.4"), try num(a, @exp(f.beta[k]), "12.3") });
     }
 }
 
@@ -608,9 +777,10 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), t: []const lex.Token) diag
     const slices = try by.checkedSlices(a, ds, s.by_cols, s.by_desc, s.notsorted, cx.diags);
     var body: std.ArrayList(u8) = .empty;
     for (slices) |slice| {
-        const sel = try prepare(a, s, slice.rows);
+        var sel = try prepare(a, s, slice.rows);
         if (sel.used() == 0) return cx.diags.fail(error.ExecError, 0, "PROC PHREG: there are no valid observations", .{});
         if (sel.events() == 0) return proc.failGap(cx.diags, 0, "PROC PHREG: input without events is not implemented", .{});
+        if (s.assigns.len > 0 and sel.events() > 0) sel.tv = try timeVarying(cx, s, sel);
         const f = fit(a, sel) catch |err| switch (err) {
             error.OutOfMemory => return error.OutOfMemory,
             error.Singular => return proc.failGap(cx.diags, 0, "PROC PHREG: linearly dependent covariates are not implemented", .{}),
@@ -705,6 +875,9 @@ test "STAT-PHREG-001 observation selection: missing roles, FREQ, WEIGHT, STRATA 
     try std.testing.expectEqual(@as(usize, 8), fr.used()); // also FREQ<1 and FREQ missing
     try std.testing.expectEqual(@as(f64, 2), fr.freq[4]); // 2.9 truncates
     try std.testing.expectEqual(@as(f64, 9), fr.total());
+    // NOTRUNC is the documented alias of NOTRUNCATE (FREQ statement, PDF p. 7364).
+    const alias = try parse(cx, try lex.tokenize(a, "proc phreg; model t*c(0)=x; freq f / notrunc; run;", &d));
+    try std.testing.expect(alias.notruncate);
     const nt = try prepare(a, try parse(cx, try lex.tokenize(a, "proc phreg; model t*c(0)=x; freq f / notruncate; run;", &d)), rows);
     try std.testing.expectEqual(@as(usize, 9), nt.used()); // 0.9 kept, missing dropped
     try std.testing.expectEqual(@as(f64, 2.9), nt.freq[4]);
@@ -867,7 +1040,23 @@ test "STAT-PHREG-001 invalid input is a user error and later-ticket features gap
         .{ .src = "proc phreg simple; model t*c(0)=x; run;", .rc = 2 },
         .{ .src = "proc phreg; model t*c(0)=x; baseline out=_null_; run;", .rc = 2 },
         .{ .src = "proc phreg; model t*c(0)=x; bayes seed=1; run;", .rc = 2 },
-        .{ .src = "proc phreg; model t*c(0)=x z; z=x*log(t); run;", .rc = 2 },
+        // STAT-PHREG-002 implements `z=x*log(t)`; these programming forms stay gaps.
+        .{ .src = "proc phreg; model t*c(0)=x z; z=x*sqrt(t); run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z; if t>2 then z=x; else z=0; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z; z=x*(t>2); run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x; x=x*log(t); run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z; z=x*nope; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z; z=x*text; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z; z=x; z=x*t; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z; z=x*(t; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z; z=x t; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z z; z=x*t; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x z; z=x*log(t-20); run;", .rc = 2 }, // missing value in a risk set
+        // page check (dev6, PDF pp. 7324-7333, 7388, 7391): documented names are gaps, not unknown syntax
+        .{ .src = "proc phreg concordance; model t*c(0)=x; run;", .rc = 2 },
+        .{ .src = "proc phreg rocoptions(at=2); model t*c(0)=x; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x; roc x; run;", .rc = 2 },
+        .{ .src = "proc phreg; model t*c(0)=x; weight w / norm; run;", .rc = 2 },
         .{ .src = "proc phreg; class g; model t*c(0)=x; run;", .rc = 2 },
         .{ .src = "proc phreg; model (t,g)*c(0)=x; run;", .rc = 2 },
         .{ .src = "proc phreg; model t*c(0)=x*g; run;", .rc = 2 },
@@ -931,4 +1120,165 @@ test "STAT-PHREG-001 NOPRINT, ID, BY groups and empty selections execute without
     try std.testing.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d2.hasErrors()));
     try std.testing.expectEqual(@as(usize, 0), out.items.len);
     try std.testing.expectEqual(@as(usize, 13), lib.find("sample").?.rows.items.len);
+}
+
+test "STAT-PHREG-002 closed-form maximum: four untied events give beta = log(golden ratio)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // Events at 1,2,3,4 with x = 0,1,1,0 and r = exp(b). By hand:
+    //   l(b)  = 2b - log(2+2r) - log(1+2r) - log(1+r)
+    //   l'(b) = 2 - 2r/(1+r) - 2r/(1+2r) = 0  <=>  r^2 - r - 1 = 0  =>  r = (1+sqrt 5)/2
+    //   I(b)  = 2r/(1+r)^2 + 2r/(1+2r)^2;  l(0) = -log 24;  U(0) = 1/3;  I(0) = 13/18
+    //   l(bhat) = -log 2 - 5 log r   (1+r = r^2 and 1+2r = r^3 at the golden ratio)
+    const s = try selOf(a, &.{ 1, 2, 3, 4 }, &.{ true, true, true, true }, &.{ 0, 1, 1, 0 }, null, null, 1);
+    const f = try fit(a, s);
+    const phi: f64 = (1.0 + @sqrt(@as(f64, 5.0))) / 2.0;
+    const info_hat = 2 / (phi * phi * phi) + 2 / (phi * phi * phi * phi * phi);
+    try std.testing.expect(f.converged);
+    try std.testing.expectApproxEqAbs(-@log(24.0), f.ll0, 1e-14);
+    try std.testing.expectApproxEqAbs((1.0 / 9.0) / (13.0 / 18.0), f.score, 1e-13);
+    // GCONV bounds the last Newton step: U^2/I < 1e-8 (|l|+1e-6), so
+    // |b - bhat| ~ |U|/I < sqrt(1e-8 (|l|+1e-6) / I).
+    const bound = @sqrt(1e-8 * (@abs(f.ll) + 1e-6) / info_hat);
+    try std.testing.expect(bound < 3e-4);
+    try std.testing.expect(@abs(f.beta[0] - @log(phi)) <= bound);
+    // The likelihood is flat to second order at the maximum.
+    try std.testing.expectApproxEqAbs(-@log(2.0) - 5 * @log(phi), f.ll, info_hat * bound * bound);
+    try std.testing.expectApproxEqRel(1 / info_hat, f.cov[0], 1e-3);
+    // LR, score and Wald agree to first order for this small departure from 0
+    // and are ordered by the hand values 0.15770, 0.15385, 0.15109.
+    const lr = 2 * (f.ll - f.ll0);
+    try std.testing.expectApproxEqAbs(2 * @log(24.0) - 2 * @log(2.0) - 10 * @log(phi), lr, 1e-6);
+    try std.testing.expectApproxEqAbs(@log(phi) * @log(phi) * info_hat, f.wald, 1e-4);
+    try std.testing.expect(lr > f.score and f.score > f.wald);
+}
+
+fn tvLib(a: A, t: []const f64, c: []const f64, x: []const f64) !*@import("../exec.zig").Library {
+    const rows = try a.alloc([7]f64, t.len);
+    for (rows, t, c, x) |*r, tv, cv, xv| r.* = .{ tv, cv, xv, 1, 1, 1, 1 };
+    return testLib(a, rows);
+}
+
+test "STAT-PHREG-002 time-dependent covariate: hand-derived likelihood, brute force, differences, invariance" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    diag.resetGap();
+    defer diag.resetGap();
+    var d = diag.Diagnostics.init(a);
+
+    // Events at 1,2,3 with x = 1,0,1 and z(t) = x*t. Risk sets by hand:
+    //   t=1: z = (1,0,1), event z=1;  t=2: z = (0,2), event z=0;  t=3: z = (3), event z=3
+    //   l(b) = b - log(1+2e^b) - log(1+e^{2b});  l(0) = -log 6
+    //   U(0) = 1 - 2/3 - 1 = -2/3;  I(0) = 2/9 + 1 = 11/9;  score = (4/9)/(11/9) = 4/11
+    // (a covariate frozen at each subject's own time would give z = (1,0,3) at t=1.)
+    {
+        const lib = try tvLib(a, &.{ 1, 2, 3 }, &.{ 1, 1, 1 }, &.{ 1, 0, 1 });
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = &d };
+        const s = try parse(cx, try lex.tokenize(a, "proc phreg; model t*c(0)=z; z=x*t; run;", &d));
+        try std.testing.expectEqual(@as(usize, 1), s.assigns.len);
+        try std.testing.expectEqualSlices(?usize, &.{null}, s.cov_cols);
+        var sel = try prepare(a, s, lib.find("sample").?.rows.items);
+        sel.tv = try timeVarying(cx, s, sel);
+        var u: [1]f64 = undefined;
+        var info: [1]f64 = undefined;
+        var w1: [1]f64 = undefined;
+        var w2: [1]f64 = undefined;
+        try std.testing.expectApproxEqAbs(-@log(6.0), evaluateTv(sel, sel.tv.?, &.{0}, &u, &info, &w1, &w2), 1e-14);
+        try std.testing.expectApproxEqAbs(-2.0 / 3.0, u[0], 1e-14);
+        try std.testing.expectApproxEqAbs(11.0 / 9.0, info[0], 1e-14);
+        for ([_]f64{ 0.3, -0.7 }) |b| {
+            const hand = b - @log(1 + 2 * @exp(b)) - @log(1 + @exp(2 * b));
+            try std.testing.expectApproxEqAbs(hand, evaluateTv(sel, sel.tv.?, &.{b}, &u, &info, &w1, &w2), 1e-13);
+        }
+        const f = try fit(a, sel);
+        try std.testing.expect(f.converged);
+        try std.testing.expectApproxEqAbs(4.0 / 11.0, f.score, 1e-13);
+        // l'(b) = 0  <=>  4r^3 + r^2 - 1 = 0 with r = exp(b); bisection on (0,1).
+        var lo: f64 = 0;
+        var hi: f64 = 1;
+        for (0..80) |_| {
+            const mid = (lo + hi) / 2;
+            if (4 * mid * mid * mid + mid * mid - 1 > 0) hi = mid else lo = mid;
+        }
+        _ = evaluateTv(sel, sel.tv.?, f.beta, &u, &info, &w1, &w2);
+        try std.testing.expect(@abs(f.beta[0] - @log(lo)) <= @sqrt(1e-8 * (@abs(f.ll) + 1e-6) / info[0]));
+    }
+
+    // Ties and censoring, p = 2: MODEL x z with z(t) = x*(log(t)-1).
+    const t = [_]f64{ 5, 5, 3, 3, 3, 8, 1, 9 };
+    const c = [_]f64{ 1, 0, 1, 1, 0, 1, 1, 0 };
+    const x = [_]f64{ 0.5, 2, 1, 0, 2, 1, 0, 3 };
+    const lib = try tvLib(a, &t, &c, &x);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = &d };
+    const rows = lib.find("sample").?.rows.items;
+    const s = try parse(cx, try lex.tokenize(a, "proc phreg; model t*c(0)=x z; z=x*(log(t)-1); run;", &d));
+    var sel = try prepare(a, s, rows);
+    sel.tv = try timeVarying(cx, s, sel);
+    const beta = [_]f64{ 0.4, -0.25 };
+    var u: [2]f64 = undefined;
+    var info: [4]f64 = undefined;
+    var w1: [2]f64 = undefined;
+    var w2: [4]f64 = undefined;
+    const ll = evaluateTv(sel, sel.tv.?, &beta, &u, &info, &w1, &w2);
+    // Brute force from the definition: every event i contributes
+    // x_i(t_i)'b - log sum_{t_j >= t_i} exp(x_j(t_i)'b)   (Breslow).
+    var brute: f64 = 0;
+    for (t, c, x) |ti, ci, xi| if (ci == 1) {
+        var s0: f64 = 0;
+        for (t, x) |tj, xj| {
+            if (tj >= ti) s0 += @exp(beta[0] * xj + beta[1] * xj * (@log(ti) - 1));
+        }
+        brute += beta[0] * xi + beta[1] * xi * (@log(ti) - 1) - @log(s0);
+    };
+    try std.testing.expectApproxEqAbs(brute, ll, 1e-12);
+    // Central differences reproduce the score and the information matrix.
+    const h = 1e-4;
+    var up: [2]f64 = undefined;
+    var um: [2]f64 = undefined;
+    var scratch: [4]f64 = undefined;
+    for (0..2) |k| {
+        var bp = beta;
+        var bm = beta;
+        bp[k] += h;
+        bm[k] -= h;
+        const lp = evaluateTv(sel, sel.tv.?, &bp, &up, &scratch, &w1, &w2);
+        const lm = evaluateTv(sel, sel.tv.?, &bm, &um, &scratch, &w1, &w2);
+        try std.testing.expectApproxEqAbs((lp - lm) / (2 * h), u[k], 1e-6);
+        for (0..2) |k2| try std.testing.expectApproxEqAbs(-(up[k2] - um[k2]) / (2 * h), info[k * 2 + k2], 1e-6);
+    }
+    try std.testing.expectApproxEqAbs(info[1], info[2], 1e-13);
+
+    // A programmed covariate that does not depend on time is the ordinary
+    // model on that column: z = 2*x+1 against the same values supplied directly.
+    const sc = try parse(cx, try lex.tokenize(a, "proc phreg; model t*c(0)=z; z=2*x+1; run;", &d));
+    var selc = try prepare(a, sc, rows);
+    selc.tv = try timeVarying(cx, sc, selc);
+    const fc = try fit(a, selc);
+    var direct: [8]f64 = undefined;
+    for (&direct, x) |*dv, xv| dv.* = 2 * xv + 1;
+    const e = [_]bool{ true, false, true, true, false, true, true, false };
+    const fd = try fit(a, try selOf(a, &t, &e, &direct, null, null, 1));
+    try std.testing.expectApproxEqAbs(fd.ll0, fc.ll0, 1e-12);
+    try std.testing.expectApproxEqAbs(fd.ll, fc.ll, 1e-12);
+    try std.testing.expectApproxEqAbs(fd.beta[0], fc.beta[0], 1e-12);
+    try std.testing.expectApproxEqAbs(fd.score, fc.score, 1e-12);
+    try std.testing.expectApproxEqAbs(fd.wald, fc.wald, 1e-12);
+    // Rescaling z by 3 divides its coefficient by 3 and leaves the tests unchanged.
+    const s3 = try parse(cx, try lex.tokenize(a, "proc phreg; model t*c(0)=x z; z=3*x*(log(t)-1); run;", &d));
+    var sel3 = try prepare(a, s3, rows);
+    sel3.tv = try timeVarying(cx, s3, sel3);
+    const f1 = try fit(a, sel);
+    const f3 = try fit(a, sel3);
+    try std.testing.expectApproxEqAbs(f1.beta[1], 3 * f3.beta[1], 1e-6);
+    try std.testing.expectApproxEqAbs(f1.ll, f3.ll, 1e-9);
+    try std.testing.expectApproxEqAbs(f1.score, f3.score, 1e-10);
+    try std.testing.expect(!d.hasErrors() and !diag.gapHit());
+
+    // The listing names the programmed covariate as written in MODEL.
+    var out: std.ArrayList(u8) = .empty;
+    try run(cx, &out, try lex.tokenize(a, "proc phreg; model t*c(0)=x Z; z=x*(log(t)-1); run;", &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "\nZ 1 ") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Number of Observations Read 8\nNumber of Observations Used 8\n") != null);
 }
