@@ -25,9 +25,9 @@ This section is the only current status summary; every section below it is a his
 - **Open review (not done):** the originals of GENMOD-001/002/018, ANOVA-001/007, FREQ-014, PHREG-003 and LIFETEST-001/002 now match exactly but the tickets stay PARK; check each against its full acceptance criteria and recorded remaining gaps before any is marked DONE.
 - **Interrupted by the full disk:** STAT-ANOVA-009 and STAT-PHREG-004 are TODO (no file changed; reading notes in the tickets). STAT-LIFETEST-003 and STAT-GENMOD-003 are PARK with UNCOMMITTED, NEVER-COMPILED source retained in `opensas-dev5` (`stat-b6/lifetest003-dev5`) and `opensas-dev7` (`stat-b6/genmod003-dev7`); do not integrate it before it is built, tested and committed there.
 - **User approval (2026-11-28):** SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-CLUSTER-001, dev2 STAT-FASTCLUS-001, dev3 STAT-CANDISC-001, dev4 STAT-CANCORR-001, dev5 STAT-MODECLUS-001, dev6 STAT-PRINQUAL-001, dev7 STAT-VARCLUS-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-INBREED-001 (PARK).
-- **Counts:** 56 DONE, 110 PARK, 7 DOING, 1249 TODO.
+- **Live slots (auto):** dev1 STAT-CLUSTER-001, dev2 STAT-FASTCLUS-001, dev3 STAT-CANDISC-001, dev4 STAT-KRIGE2D-001, dev5 STAT-MODECLUS-001, dev6 STAT-PRINQUAL-001, dev7 STAT-VARCLUS-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-INBREED-001 (PARK), STAT-CANCORR-001 (PARK).
+- **Counts:** 56 DONE, 111 PARK, 7 DOING, 1248 TODO.
 - **Next:** integrate each returned ticket, refill its slot, verify and push the next batch; run the open review above. Pending user decision: the `best32.` display fix found by STAT-STDIZE-001 changes five existing test expectations (patch kept in the coordinator scratchpad, not applied).
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `b9a3dd4e7838cc9475a4d8184ff88883ef9a0a5c` (batch 11; batch 10 was `f99879d722b7653d6a51198bf48ea8915fccc1e0`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 - **Batch 5 verification at that exact SHA (2026-11-28):** whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct exit 0 — **2380/2380 unit tests** (2262 + 102 + 13 + 3), **2409/2409 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged (1425 entries), tree clean.
@@ -2770,7 +2770,7 @@ Source: S154, Chapter 34, `The CANCORR Procedure`, PDF pp. 2119–2148. Tasks in
 
 <a id="stat-cancorr-001"></a>
 
-### [DOING @dev4] STAT-CANCORR-001 — CANCORR — Data input, variable roles, and basic options
+### [PARK] STAT-CANCORR-001 — CANCORR — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 34 / `PROC CANCORR Statement` (PDF pp. 2126–2132); S154 / Chapter 34 / `BY Statement` (PDF p. 2132); S154 / Chapter 34 / `FREQ Statement` (PDF pp. 2132–2133); S154 / Chapter 34 / `VAR Statement` (PDF p. 2133); S154 / Chapter 34 / `WEIGHT Statement` (PDF p. 2133); S154 / Chapter 34 / `Missing Values` (PDF p. 2134).
 - Scope: Integrate PROC CANCORR declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; FREQ; VAR; WEIGHT; Missing Values; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -8278,7 +8278,7 @@ Source: S154, Chapter 74, `The KRIGE2D Procedure`, PDF pp. 5435–5510. Tasks in
 
 <a id="stat-krige2d-001"></a>
 
-### [TODO] STAT-KRIGE2D-001 — KRIGE2D — Data input, variable roles, and basic options
+### [DOING @dev4] STAT-KRIGE2D-001 — KRIGE2D — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 74 / `PROC KRIGE2D Statement` (PDF pp. 5443–5449); S154 / Chapter 74 / `BY Statement` (PDF pp. 5449–5450); S154 / Chapter 74 / `ID Statement` (PDF p. 5453).
 - Scope: Integrate PROC KRIGE2D declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; ID; apply this procedure's rules for missing values, variable roles, and observation selection.
