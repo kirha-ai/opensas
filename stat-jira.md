@@ -10994,7 +10994,7 @@ Source: S154, Chapter 92, `The PHREG Procedure`, PDF pp. 7311–7582. Tasks in t
 
 <a id="stat-phreg-002"></a>
 
-### [DOING @dev6] STAT-PHREG-002 — PHREG — Partial likelihood estimation for proportional hazards regression
+### [PARK] STAT-PHREG-002 — PHREG — Partial likelihood estimation for proportional hazards regression
 
 - Source: S154 / Chapter 92 / `Getting Started: PHREG Procedure` (PDF pp. 7315–7323); S154 / Chapter 92 / `Overview: PHREG Procedure` (PDF pp. 7313–7315).
 - Scope: Implement partial likelihood estimation for proportional hazards regression using the documented default path and establish the computational state needed by later extensions; implement specialized models, methods, and diagnostics outside that default example in their corresponding feature tickets.
