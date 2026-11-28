@@ -8,9 +8,9 @@ This section is the only current status summary; every section below it is a his
 - **Resumed 2026-11-28 about 07:20Z** after the 06:31Z account usage limit stopped all dev contexts. At the user's direction devs may compare with real SAS via `/Users/thomas/sas/bin/sasrun foo.sas -f text -o - -l /dev/null`, only when truly blocked. Coordinator keep-awake `caffeinate` PID 62218. Coordinator scripts and dev brief live in the session scratchpad `stat/` directory.
 - **Batch 23 verification at exact SHA `fcfdac29b6c60f7f27185e5ae4c2594e376e3b6e` (2026-11-28):** `zig build install` direct 0; whole `tests/STAT15.4-oracle/` moved out of the checkout, then `zig build gate -j2 --summary all` direct 0 — **2748/2748 unit tests**, **2644/2644 corpus**, **11/11 programs**; `zig build install` direct 0; separate supplemental direct 0, **1113/1113**. Oracle restored unchanged, tree clean, HEAD unchanged. Pushed. **Integrated, PARK:** STAT-HPLMIXED-001.
 - **User approvals (2026-11-28):** public classic sample data, including rows exported from real SAS (Iris), may be committed; build caches (`.zig-cache`) may be deleted automatically when free disk falls to about 8 GB, only for idle worktrees (done once, 41 GB free); the `best32.` display fix is approved as STAT-BEST-001. Earlier scope: SASHELP sample data taken from SAS's public sample material may be committed to this public repository, for STAT-SASHELP-001 and the later SASHELP tickets; record source and verification, never invent rows, ask before adding a data set above about 2 MB.
-- **Live slots (auto):** dev1 STAT-CATMOD-001, dev2 STAT-PRINQUAL-001, dev3 STAT-CANCORR-001, dev4 STAT-TPSPLINE-001, dev5 STAT-CAUSALGRAPH-001, dev5 STAT-INBREED-001, dev6 STAT-VARCLUS-001, dev7 STAT-BEST-001.
-- **Integrated locally, awaiting batch verification (auto):** STAT-CAUSALTRT-001 (PARK), STAT-CAUSALGRAPH-001 (DONE candidate), STAT-PSMATCH-001 (PARK).
-- **Counts:** 56 DONE, 130 PARK, 8 DOING, 1230 TODO.
+- **Live slots (auto):** dev1 STAT-HPNLMOD-001, dev2 STAT-PRINQUAL-001, dev3 STAT-CANCORR-001, dev4 STAT-TPSPLINE-001, dev5 STAT-CAUSALGRAPH-001, dev5 STAT-INBREED-001, dev6 STAT-VARCLUS-001, dev7 STAT-BEST-001.
+- **Integrated locally, awaiting batch verification (auto):** STAT-CAUSALTRT-001 (PARK), STAT-CAUSALGRAPH-001 (DONE candidate), STAT-PSMATCH-001 (PARK), STAT-CATMOD-001 (PARK).
+- **Counts:** 56 DONE, 131 PARK, 8 DOING, 1229 TODO.
 - **Next:** integrate each returned ticket and refill its slot, preferring close-out attempts on PARK tickets whose originals now match exactly (DISTANCE-001, PRINQUAL-001, VARCLUS-001, TPSPLINE-001, CATMOD-001, CANCORR-001, GEE-001, INBREED-001, then the open review in the batch 6 receipt), because a DONE ticket unlocks its dependents; then other eligible tickets.
 - **Working branch:** `feat/stat/batch-4`. Last tested and pushed code SHA `fcfdac29b6c60f7f27185e5ae4c2594e376e3b6e` (batch 23; batch 22 was `7ead2e784bcf074b5903487670563931c41985f1`). The bullets below this one describe batch 5 and are historical. Later commits that touch only this file are documentation. No PR created or merged; `main` untouched.
 
@@ -2948,7 +2948,7 @@ Source: S154, Chapter 36, `The CATMOD Procedure`, PDF pp. 2175–2302. Tasks in 
 
 <a id="stat-catmod-001"></a>
 
-### [DOING @dev1] STAT-CATMOD-001 — CATMOD — Data input, variable roles, and basic options
+### [PARK] STAT-CATMOD-001 — CATMOD — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 36 / `PROC CATMOD Statement` (PDF pp. 2191–2192); S154 / Chapter 36 / `BY Statement` (PDF pp. 2192–2193); S154 / Chapter 36 / `POPULATION Statement` (PDF pp. 2208–2211); S154 / Chapter 36 / `WEIGHT Statement` (PDF p. 2220); S154 / Chapter 36 / `Missing Values` (PDF p. 2220); S154 / Chapter 36 / `Input Data Sets` (PDF pp. 2220–2223); S154 / Chapter 36 / `Ordering of Populations and Responses` (PDF pp. 2223–2224).
 - Scope: Integrate PROC CATMOD declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; POPULATION; WEIGHT; Missing Values; Input Data Sets; Ordering of Populations and Responses; apply this procedure's rules for missing values, variable roles, and observation selection.
@@ -2966,7 +2966,7 @@ Source: S154, Chapter 36, `The CATMOD Procedure`, PDF pp. 2175–2302. Tasks in 
   - Originals (unchanged, from `output/`): documented_feature 809/809 tokens, 0 differing, rc 0 vs 0; statement_by 342/342 tokens, 0 differing, rc 0 vs 0. No ERROR/WARNING lines.
   - Validation: `heavy.sh zig build install` exit 0; `heavy.sh zig test src/root.zig -lc --test-filter "STAT-CATMOD-001"` exit 0 (70/70 filtered, 3 CATMOD tests); corpus `stat_catmod_{input,dup,gap,user_error,missing,documented,by}` each `corpus: 1/1 passing` (exit 0). `stat_catmod_input.txt` equals the SAS listing except the page-break blank line SAS prints before each title. Not run (coordinator): `zig build gate`, supplemental suite, oracle-absent check.
   - Exact remainder: the "Input Data Sets" direct-input form (TYPE=EST response functions and covariances) — blocked on RESPONSE READ (STAT-CATMOD-004) and FACTORS/_RESPONSE_ (STAT-CATMOD-003/004); if the coordinator assigns that form to STAT-CATMOD-004, nothing else in this ticket's scope remains. Owned elsewhere (loud): near-zero cells, singular/non-converging fits and estimates below 0.001 (STAT-CATMOD-006 Computational Method / STAT-CATMOD-002 precision), MODEL options, other RESPONSE functions, DIRECT/FACTORS/LOGLIN, CONTRAST/REPEATED/RESTRICT.
-
+- Coordinator review (close-out, 2026-11-28): PARK. Both originals exact and every other scope item implemented and tested; the one remainder is the TYPE=EST direct response-function input of "Input Data Sets", usable only with RESPONSE READ/_F_/_RESPONSE_ (STAT-CATMOD-004) and FACTORS (STAT-CATMOD-003). Moving that form to STAT-CATMOD-004 would make this a DONE candidate; that scope change needs the user's decision.
 
 <a id="stat-catmod-002"></a>
 
@@ -6997,7 +6997,7 @@ Source: S154, Chapter 63, `The HPNLMOD Procedure`, PDF pp. 4871–4904. Tasks in
 
 <a id="stat-hpnlmod-001"></a>
 
-### [TODO] STAT-HPNLMOD-001 — HPNLMOD — Data input, variable roles, and basic options
+### [DOING @dev1] STAT-HPNLMOD-001 — HPNLMOD — Data input, variable roles, and basic options
 
 - Source: S154 / Chapter 63 / `PROC HPNLMOD Statement` (PDF pp. 4875–4880); S154 / Chapter 63 / `BY Statement` (PDF p. 4881).
 - Scope: Integrate PROC HPNLMOD declarations, basic options, defaults, and execution boundaries; this ticket establishes parameter objects and result interfaces, while later feature tickets implement model-, algorithm-, and output-specific options. Also implement BY; apply this procedure's rules for missing values, variable roles, and observation selection.
