@@ -11,6 +11,8 @@ pub const Order = @import("class_levels.zig").Order;
 pub const Effect = struct { name: []const u8, variables: []const usize };
 pub const Spec = struct {
     input: proc.ProcInput,
+    repeated: ?@import("glm_repeated.zig").Request = null,
+    nouni: bool = false,
     means: []const @import("glm_means.zig").Request = &.{},
     hov: ?@import("glm_hov.zig").Request = null,
     random: ?@import("glm_random.zig").Request = null,
@@ -218,7 +220,10 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
             }
             if (at(tokens, j, .slash)) j += 1;
             while (j < end) {
-                if (kw(tokens, j, "noint")) {
+                if (kw(tokens, j, "nouni")) {
+                    result.nouni = true;
+                    j += 1;
+                } else if (kw(tokens, j, "noint")) {
                     result.intercept = false;
                     j += 1;
                 } else if (kw(tokens, j, "ss1")) {
@@ -235,11 +240,17 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
                     j += 1;
                 } else if (kw(tokens, j, "alpha")) result.alpha = try real(cx, tokens[0..end], &j) else if (kw(tokens, j, "singular")) result.singular = try real(cx, tokens[0..end], &j) else return unsupported(cx, tokens[j], &.{ "solution", "e", "e1", "e2", "e3", "e4", "clparm", "cli", "clm", "p", "r", "nouni", "intercept", "tolerance", "inverse", "xpx", "effectsize" });
             }
+        } else if (kw(tokens, i, "repeated")) {
+            if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: REPEATED must follow MODEL", .{});
+            if (result.repeated != null) return proc.failGap(cx.diags, tokens[i].line, "PROC GLM: multiple REPEATED statements are not implemented", .{});
+            result.repeated = try @import("glm_repeated.zig").read(cx, tokens[i..end], result);
         } else if (kw(tokens, i, "contrast")) {
+            if (result.repeated != null) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: CONTRAST must precede REPEATED", .{});
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: CONTRAST must follow MODEL", .{});
             if (tests.items.len > 0 or result.random != null) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: CONTRAST must precede TEST and RANDOM", .{});
             try contrasts.append(cx.arena, try @import("glm_contrast.zig").read(cx, tokens[i..end], result, effects.items));
         } else if (kw(tokens, i, "test")) {
+            if (result.repeated != null) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: TEST must precede REPEATED", .{});
             if (!model_seen) return cx.diags.fail(error.ParseError, tokens[i].line, "PROC GLM: TEST must follow MODEL", .{});
             try tests.append(cx.arena, try @import("glm_test_statement.zig").read(cx, tokens[i..end], result, effects.items));
         } else if (kw(tokens, i, "means")) {
@@ -286,6 +297,7 @@ pub fn parse(cx: proc.ProcCtx, tokens: []const lex.Token) diag.Error!Spec {
         i = end + 1;
     }
     if (!model_seen) return cx.diags.fail(error.ParseError, 0, "PROC GLM: MODEL statement required", .{});
+    if (result.nouni and result.repeated == null) return proc.failGap(cx.diags, 0, "PROC GLM: NOUNI without REPEATED is not implemented", .{});
     result.effects = effects.items;
     result.lsmeans = lsmeans.items;
     result.means = means.items;

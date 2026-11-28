@@ -54,6 +54,10 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
     for (groups) |group| {
         if (spec.absorb.len > 0) try @import("glm_absorb.zig").validate(cx, spec, group);
         if (!spec.noprint and spec.by.len > 0 and group.observations.len > 0) try @import("by_groups.zig").appendLine(cx.arena, out, spec.input.ds, group.observations[0].cells, spec.by);
+        if (spec.repeated != null) {
+            try @import("glm_repeated.zig").execute(cx, out, spec, group);
+            continue;
+        }
         for (spec.responses) |response| {
             const d = try design.build(cx, spec, group, response);
             if (spec.absorb.len > 0) {
@@ -102,6 +106,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), spec: Spec) diag.Error
 
 test {
     _ = @import("glm_computational_tests.zig");
+    _ = @import("glm_repeated.zig");
     _ = @import("glm_effectsize.zig");
     _ = @import("glm_tests.zig");
     _ = @import("glm_persistence_tests.zig");
