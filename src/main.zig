@@ -3556,6 +3556,23 @@ const PrintOpts = struct {
     // per-print format overrides from a `format v fmt.;` statement (parallel arrays).
     fmt_names: ?[]const []const u8 = null,
     fmt_specs: ?[]const []const u8 = null,
+    // STAT-PRINT-001: per-dataset-column decimal count for unformatted numeric
+    // columns (index = column index); null entry = per-cell BEST12. (old path).
+    auto_dec: ?[]const ?u8 = null,
+
+    /// The rendered text of cell `v` in dataset column `cj`: the column's
+    /// format, else its column-wide decimal format, else BEST12.
+    fn cellFor(self: PrintOpts, a: std.mem.Allocator, v: sas.Value, cols: []const Column, cj: usize) ![]const u8 {
+        const fmt = self.fmtFor(cols[cj]);
+        if (fmt == null) if (self.auto_dec) |ad| if (ad[cj]) |d| switch (v) {
+            .num => |x| if (!std.math.isNan(x)) {
+                const spec = try std.fmt.allocPrint(a, "32.{d}", .{d});
+                return std.mem.trimStart(u8, try sas.format.apply(a, v, spec), " ");
+            },
+            .str => {},
+        };
+        return fmtCell(a, v, fmt);
+    }
 
     /// The header text for column `c`: the per-print override, else the column's
     /// stored label, else the name — only when label mode is on (F-printlabel).
@@ -3944,17 +3961,24 @@ fn printTable(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *sas.dataset.Da
         if (!containsIdx(sel.items, j)) try sel.append(a, j);
     };
     const sidx = sel.items;
+    opts.auto_dec = try printAutoDecimals(a, ds, sidx, opts);
 
     // column widths = max(header, every rendered cell); plus the Obs width.
     var colw = try a.alloc(usize, sidx.len);
-    for (sidx, 0..) |cj, k| colw[k] = headerWidth(cols[cj], opts); // label width when label mode is on
+    for (sidx, 0..) |cj, k| colw[k] = if (autoSplitsHeader(cols[cj], opts)) 0 else headerWidth(cols[cj], opts); // label width when label mode is on
     var w_obs: usize = "Obs".len;
     var r: usize = 0;
     while (r < nrows) : (r += 1) {
         if (!opts.noobs) w_obs = @max(w_obs, (try std.fmt.allocPrint(a, "{d}", .{obsNum(srcobs, r)})).len);
         const rv = ds.row(r);
-        for (sidx, 0..) |cj, k| colw[k] = @max(colw[k], (try fmtCell(a, rv[cj], opts.fmtFor(cols[cj]))).len);
+        for (sidx, 0..) |cj, k| colw[k] = @max(colw[k], (try opts.cellFor(a, rv[cj], cols, cj)).len);
     }
+
+    // STAT-PRINT-001: an unformatted numeric name wider than its values breaks
+    // at its lower-to-upper case changes (printHeader) instead of widening.
+    for (sidx, 0..) |cj, k| if (autoSplitsHeader(cols[cj], opts)) {
+        colw[k] = @max(colw[k], capitalHeaderWordWidth(cols[cj].name));
+    };
 
     // per-column totals for the `sum` list, widened to fit the rendered total.
     var totals = try a.alloc(?f64, sidx.len);
@@ -3976,7 +4000,7 @@ fn printTable(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *sas.dataset.Da
                 .str => {},
             };
             totals[k] = acc;
-            colw[k] = @max(colw[k], (try fmtCell(a, .{ .num = acc }, opts.fmtFor(cols[cj]))).len);
+            colw[k] = @max(colw[k], (try opts.cellFor(a, .{ .num = acc }, cols, cj)).len);
             break;
         };
     };
@@ -4078,6 +4102,88 @@ fn printTable(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *sas.dataset.Da
     }
 }
 
+/// STAT-PRINT-001: SAS PROC PRINT gives an unformatted numeric column ONE
+/// fixed-decimal format so the decimals line up (`69.0`, `375.50`, `0.00000`).
+/// Derived from SAS 9.4 listings (STAT-SCORE-001/-DISTANCE-001/-PRINQUAL-001
+/// oracles) and SAS runs on invented data: per value take its BEST12. text;
+/// I = widest integer part (sign excluded), D = most decimals; then
+/// d = min(D, max(6 - I, 2)) (`123456789012.00` beside `0.000123`).
+/// ponytail: SAS prints a column of values all below 0.1 (`.009261697`) and
+/// E-notation values (`1.0001E-12`) differently again; those columns keep the
+/// old per-cell BEST12. path. The rule is applied over all printed rows.
+fn printAutoDecimals(a: std.mem.Allocator, ds: *sas.dataset.Dataset, sidx: []const usize, opts: PrintOpts) ![]const ?u8 {
+    const cols = ds.columns.items;
+    const out = try a.alloc(?u8, cols.len);
+    @memset(out, null);
+    col: for (sidx) |cj| {
+        if (cols[cj].type != .num or opts.fmtFor(cols[cj]) != null or out[cj] != null) continue;
+        var int_w: usize = 1;
+        var dec: usize = 0;
+        var max_abs: f64 = 0;
+        for (0..ds.rowCount()) |r| switch (ds.row(r)[cj]) {
+            .num => |x| if (!std.math.isNan(x)) {
+                const t = std.mem.trimStart(u8, try sas.format.bestNum(a, x), "-");
+                if (std.mem.indexOfAny(u8, t, "Ee") != null) continue :col;
+                max_abs = @max(max_abs, @abs(x));
+                const dot = std.mem.indexOfScalar(u8, t, '.') orelse t.len;
+                int_w = @max(int_w, @max(dot, 1));
+                if (dot < t.len) dec = @max(dec, t.len - dot - 1);
+            },
+            .str => {},
+        };
+        if (max_abs > 0 and max_abs < 0.1) continue;
+        out[cj] = @intCast(@min(dec, @max(6 -| int_w, 2)));
+    }
+    return out;
+}
+
+test "STAT-PRINT-001 column-wide decimals follow the SAS listing rule" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = sas.dataset.Dataset.init(a, "t");
+    // invented values; expected decimals from a SAS 9.4 run (dev4 probe)
+    const cases = [_]struct { v: [2]f64, d: u8 }{
+        .{ .v = .{ 0.3333333333, 2 }, .d = 5 },
+        .{ .v = .{ 123.456789, 1 }, .d = 3 },
+        .{ .v = .{ 12345.6789, 0.5 }, .d = 2 },
+        .{ .v = .{ 10000000000.5, 1 }, .d = 0 },
+        .{ .v = .{ 1234567.891, 1 }, .d = 2 },
+        .{ .v = .{ -0.123456789, 1 }, .d = 5 },
+        .{ .v = .{ 1, 2.5 }, .d = 1 },
+        .{ .v = .{ 42, 0.000123 }, .d = 4 },
+        .{ .v = .{ -11.125, 2.25 }, .d = 3 },
+        .{ .v = .{ 123456789012, 0.000123 }, .d = 2 },
+    };
+    for (cases, 0..) |c, k| {
+        _ = c;
+        _ = try ds.addColumn(try std.fmt.allocPrint(a, "c{d}", .{k}), .num);
+    }
+    for (0..2) |r| {
+        const row = try a.alloc(sas.Value, cases.len);
+        for (cases, 0..) |c, k| row[k] = .{ .num = c.v[r] };
+        try ds.appendRow(row);
+    }
+    var sidx: [cases.len]usize = undefined;
+    for (&sidx, 0..) |*x, k| x.* = k;
+    const got = try printAutoDecimals(a, &ds, &sidx, .{});
+    for (cases, 0..) |c, k| try std.testing.expectEqual(@as(?u8, c.d), got[k]);
+    const opts: PrintOpts = .{ .auto_dec = got };
+    try std.testing.expectEqualStrings("10000000001", try opts.cellFor(a, .{ .num = 10000000000.5 }, ds.columns.items, 3));
+    try std.testing.expectEqualStrings("0.33333", try opts.cellFor(a, .{ .num = 0.3333333333 }, ds.columns.items, 0));
+    try std.testing.expectEqualStrings("2.00000", try opts.cellFor(a, .{ .num = 2 }, ds.columns.items, 0));
+    try std.testing.expectEqualStrings("123456789012.00", try opts.cellFor(a, .{ .num = 123456789012 }, ds.columns.items, 9));
+    // fallback columns: all values below 0.1, or an E-notation value
+    var lo = sas.dataset.Dataset.init(a, "lo");
+    _ = try lo.addColumn("p", .num);
+    _ = try lo.addColumn("q", .num);
+    try lo.appendRow(&.{ .{ .num = 0.009261697 }, .{ .num = 1.0001e-12 } });
+    try lo.appendRow(&.{ .{ .num = 0.0001 }, .{ .num = 1 } });
+    const fb = try printAutoDecimals(a, &lo, &.{ 0, 1 }, .{});
+    try std.testing.expectEqual(@as(?u8, null), fb[0]);
+    try std.testing.expectEqual(@as(?u8, null), fb[1]);
+}
+
 /// Balance contiguous panels at the minimum number needed for LINESIZE.
 /// No cell is removed or reformatted; a single oversized column stays intact.
 /// SAS Procedures Guide, PRINT, printed pp.1798–1800; COMMON004 exercises
@@ -4171,6 +4277,35 @@ fn appendCapitalHeader(a: std.mem.Allocator, pieces: *std.ArrayList([]const u8),
     try pieces.append(a, text[start..]);
 }
 
+/// STAT-PRINT-001: SAS 9.4 listings split an unformatted numeric column's NAME
+/// at lower-to-upper case changes when the values are narrower (`RunTime` over
+/// `11.37` → `Run`/`Time`; `LosAngeles`, `SalesQ1Total` → `Sales`/`Q1Total`),
+/// but not `aB` (one-letter piece), `HTTPServer`, `ABC_DEF` or `AGE_WGT`.
+/// ponytail: underscore breaks (`Big_Value_`/`Name`, `First_`/`Name`) and
+/// character columns are not modelled — those headers keep widening the column.
+fn autoSplitsHeader(c: Column, opts: PrintOpts) bool {
+    if (opts.label or opts.split != null or c.type != .num or opts.fmtFor(c) != null) return false;
+    const t = c.name;
+    if (std.mem.indexOfScalar(u8, t, '_') != null) return false; // `x_SumWgt`: SAS splits `x_`/`Sum`/`Wgt`; unmodelled
+    var start: usize = 0;
+    var any = false;
+    for (1..t.len + 1) |i| if (i == t.len or capitalHeaderBreak(t, i)) {
+        if (i - start < 2) return false;
+        if (i < t.len) any = true;
+        start = i;
+    };
+    return any;
+}
+
+test "STAT-PRINT-001 numeric names split only at lower-to-upper breaks" {
+    const yes = [_][]const u8{ "RunTime", "RestPulse", "LongMixedName", "SalesQ1Total", "WashingtonDC", "LosAngeles" };
+    const no = [_][]const u8{ "aB", "HTTPServer", "ABC_DEF", "AGE_WGT", "Big_Value_Name", "Oxygen", "TOTAL" };
+    for (yes) |n| try std.testing.expect(autoSplitsHeader(.{ .name = n, .type = .num }, .{}));
+    for (no) |n| try std.testing.expect(!autoSplitsHeader(.{ .name = n, .type = .num }, .{}));
+    try std.testing.expect(!autoSplitsHeader(.{ .name = "RunTime", .type = .char }, .{}));
+    try std.testing.expect(!autoSplitsHeader(.{ .name = "RunTime", .type = .num }, .{ .label = true }));
+}
+
 /// Header contribution excludes only automatic capital breaks that fit the
 /// actual format width. Cell and total widths may still widen the column.
 fn headerWidth(c: Column, opts: PrintOpts) usize {
@@ -4235,7 +4370,7 @@ fn printDataRow(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *sas.dataset.
     if (!opts.noobs) try cell(a, &line, try std.fmt.allocPrint(a, "{d}", .{obsNum(srcobs, r)}), w_obs, .right, true);
     for (sidx, 0..) |cj, k| {
         const j: Just = if (cols[cj].type == .char) .left else .right;
-        try cell(a, &line, try fmtCell(a, rv[cj], opts.fmtFor(cols[cj])), colw[k], j, opts.noobs and k == 0);
+        try cell(a, &line, try opts.cellFor(a, rv[cj], cols, cj), colw[k], j, opts.noobs and k == 0);
     }
     try flushLine(a, out, &line);
 }
@@ -4254,7 +4389,7 @@ fn printTotalsRow(a: std.mem.Allocator, out: *std.ArrayList(u8), totals: []const
     for (sidx, 0..) |cj, k| {
         if (!(opts.noobs and k == 0)) try pad(a, &line, gutter);
         if (totals[k]) |tot|
-            try cellText(a, &line, try fmtCell(a, .{ .num = tot }, opts.fmtFor(cols[cj])), colw[k], .right)
+            try cellText(a, &line, try opts.cellFor(a, .{ .num = tot }, cols, cj), colw[k], .right)
         else
             try pad(a, &line, colw[k]);
     }
