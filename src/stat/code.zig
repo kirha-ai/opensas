@@ -319,6 +319,9 @@ pub fn generate(a: std.mem.Allocator, m: Model, o: Options) ![]const u8 {
 }
 pub fn publish(cx: proc.ProcCtx, out: *std.ArrayList(u8), m: Model, o: Options) diag.Error!void {
     const bytes = generate(cx.arena, m, o) catch |err| return if (err == error.OutOfMemory) error.OutOfMemory else proc.failGap(cx.diags, o.line, "CODE: scoring representation is not implemented ({t})", .{err});
+    try publishBytes(cx, out, bytes, o);
+}
+pub fn publishBytes(cx: proc.ProcCtx, out: *std.ArrayList(u8), bytes: []const u8, o: Options) diag.Error!void {
     const path = switch (o.target) {
         .log => {
             try cx.diags.plainLine(bytes);

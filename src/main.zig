@@ -202,6 +202,8 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     // format flags above came to leak there.
     g_failed = false;
     sas.exec.g_abort_rc = null; // clear any prior run's ABORT (BUG-abortreturncode)
+    temporary_filenames = .empty;
+    defer cleanupTemporaryFilenames();
     fileref_count = 0; // new session: drop prior-run filerefs (their name/path slices point into the prior run's freed arena — wasm runs many programs per load)
     var lib = sas.exec.Library.init(a);
     lib.diags = diags; // GH#15: so a read-only-libref output access reports LOUD
@@ -2023,6 +2025,16 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 device = toks[j].text;
                 j += 1;
             }
+            if (device) |kind| if (eqi(kind, "temp")) {
+                if (j < toks.len and toks[j].tag != .semicolon and toks[j].tag != .eof) return sas.proc.failGap(diags, toks[1].line, "FILENAME TEMP options are not implemented", .{});
+                try registerTemporaryFilename(a, diags, toks[1].line, toks[1].text);
+                return;
+            };
+            if (device) |kind| if (eqi(kind, "clear")) {
+                if (j < toks.len and toks[j].tag != .semicolon and toks[j].tag != .eof) return diags.fail(error.ParseError, toks[1].line, "FILENAME CLEAR takes no further options", .{});
+                clearFileref(toks[1].text);
+                return;
+            };
             // BUG-filenameconcatnoop: the FILENAME CONCATENATION form
             // `filename ref ('a.txt' 'b.txt');` (Language Reference: Concepts Table 21.5 p.517:
             // "FILENAME statement with concatenation, wildcard, or piping")
@@ -2131,6 +2143,7 @@ var fileref_count: usize = 0;
 
 fn registerFileref(diags: *sas.diag.Diagnostics, line: usize, name: []const u8, path: []const u8) sas.diag.Error!void {
     for (filerefs[0..fileref_count]) |*f| if (eqi(f.name, name)) { // re-declaration re-binds
+        if (!std.mem.eql(u8, f.path, path)) releaseTemporaryFilename(f.path);
         f.path = path;
         return;
     };
@@ -2145,6 +2158,49 @@ fn registerFileref(diags: *sas.diag.Diagnostics, line: usize, name: []const u8, 
     fileref_count += 1;
 }
 
+// Owned TEMP paths are unique, portable, and live only for this interpretation.
+var temporary_filenames: std.ArrayList([]const u8) = .empty;
+fn releaseTemporaryFilename(path: []const u8) void {
+    const iov = std.Io.Threaded.global_single_threaded.io();
+    for (temporary_filenames.items, 0..) |owned, index| if (std.mem.eql(u8, owned, path)) {
+        Io.Dir.cwd().deleteFile(iov, path) catch {};
+        _ = temporary_filenames.swapRemove(index);
+        return;
+    };
+}
+fn clearFileref(name: []const u8) void {
+    var i: usize = 0;
+    while (i < fileref_count) {
+        if (eqi(name, "_all_") or eqi(filerefs[i].name, name)) {
+            releaseTemporaryFilename(filerefs[i].path);
+            fileref_count -= 1;
+            filerefs[i] = filerefs[fileref_count];
+        } else i += 1;
+    }
+}
+fn cleanupTemporaryFilenames() void {
+    while (temporary_filenames.items.len > 0) {
+        const path = temporary_filenames.items[temporary_filenames.items.len - 1];
+        releaseTemporaryFilename(path);
+    }
+    temporary_filenames = .empty;
+}
+fn registerTemporaryFilename(a: std.mem.Allocator, d: *sas.diag.Diagnostics, line: usize, name: []const u8) sas.diag.Error!void {
+    const iov = std.Io.Threaded.global_single_threaded.io();
+    var dir = Io.Dir.cwd().createDirPathOpen(iov, ".zig-cache/filename-temp", .{}) catch return d.fail(error.ExecError, line, "FILENAME TEMP: cannot create work storage", .{});
+    defer dir.close(iov);
+    var nonce: [16]u8 = undefined;
+    iov.random(&nonce);
+    const hex = std.fmt.bytesToHex(nonce, .lower);
+    const file = dir.createFile(iov, &hex, .{ .exclusive = true }) catch return d.fail(error.ExecError, line, "FILENAME TEMP: cannot create temporary file", .{});
+    file.close(iov);
+    const path = try std.fmt.allocPrint(a, ".zig-cache/filename-temp/{s}", .{hex});
+    errdefer Io.Dir.cwd().deleteFile(iov, path) catch {};
+    clearFileref(name);
+    try temporary_filenames.append(a, path);
+    try registerFileref(d, line, name, path);
+}
+
 fn findFileref(name: []const u8) ?[]const u8 {
     for (filerefs[0..fileref_count]) |f| if (eqi(f.name, name)) return f.path;
     return null;
@@ -2152,6 +2208,7 @@ fn findFileref(name: []const u8) ?[]const u8 {
 
 fn registerFilerefReadTime(name: []const u8, path: []const u8) void {
     for (filerefs[0..fileref_count]) |*f| if (eqi(f.name, name)) {
+        if (!std.mem.eql(u8, f.path, path)) releaseTemporaryFilename(f.path);
         f.path = path;
         return;
     };
@@ -7581,4 +7638,57 @@ test "GLM005 retained RUN ignores late declarations and QUIT closes without repl
     const status=try rcOf(a,&out,"ods graphics off; data sample; x=1; y=2; run; proc glm data=sample noprint; model y=; run; model y=x; run;",&log);
     try std.testing.expectEqual(@as(u8,1),status);
     try std.testing.expect(std.mem.indexOf(u8,log,"cannot be redeclared")!=null);
+}
+
+test "LOGISTIC018 FILENAME TEMP lifecycle bare INCLUDE and user path preservation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const iov = std.Io.Threaded.global_single_threaded.io();
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try interpret(a, &out, &d, "filename scratch temp;\n" ++
+        "data _null_; file scratch; put 'data _null_; put 314159; run;'; run;\n" ++
+        "%include scratch;\n", iov);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqualStrings("314159\n", out.items);
+    const path = findFileref("scratch").?;
+    try std.testing.expectError(error.FileNotFound, Io.Dir.cwd().openFile(iov, path, .{}));
+    try std.testing.expectEqual(@as(usize, 0), temporary_filenames.items.len);
+    var d2 = sas.diag.Diagnostics.init(a);
+    var out2: std.ArrayList(u8) = .empty;
+    try interpret(a, &out2, &d2,
+        "filename scratch temp;\n" ++
+        "data _null_; file scratch; put 'data _null_; put 271828; run;'; run;\n" ++
+        "%include scratch;\n" ++
+        "filename scratch clear;\n", iov);
+    try std.testing.expect(!d2.hasErrors());
+    try std.testing.expectEqualStrings("271828\n", out2.items);
+    try std.testing.expect(findFileref("scratch") == null);
+    fileref_count = 0;
+    defer {
+        cleanupTemporaryFilenames();
+        fileref_count = 0;
+    }
+    try registerTemporaryFilename(a, &d, 0, "owned");
+    const old = findFileref("owned").?;
+    try registerTemporaryFilename(a, &d, 0, "owned");
+    try std.testing.expectError(error.FileNotFound, Io.Dir.cwd().openFile(iov, old, .{}));
+    const fresh = findFileref("owned").?;
+    const user_path = ".zig-cache/logistic018-user-file.sas";
+    defer Io.Dir.cwd().deleteFile(iov, user_path) catch {};
+    try std.testing.expect(sas.io.writeFileRaw(user_path, "user contents"));
+    try registerFileref(&d, 0, "user", user_path);
+    try registerTemporaryFilename(a, &d, 0, "rebound");
+    const rebound = findFileref("rebound").?;
+    try registerFileref(&d, 0, "rebound", user_path);
+    try std.testing.expectError(error.FileNotFound, Io.Dir.cwd().openFile(iov, rebound, .{}));
+    try registerTemporaryFilename(a, &d, 0, "readtime");
+    const readtime = findFileref("readtime").?;
+    registerFilerefReadTime("readtime", user_path);
+    try std.testing.expectError(error.FileNotFound, Io.Dir.cwd().openFile(iov, readtime, .{}));
+    clearFileref("_all_");
+    try std.testing.expectEqual(@as(usize, 0), fileref_count);
+    try std.testing.expectError(error.FileNotFound, Io.Dir.cwd().openFile(iov, fresh, .{}));
+    try std.testing.expectEqualStrings("user contents", try Io.Dir.cwd().readFileAlloc(iov, user_path, a, .limited(128)));
 }

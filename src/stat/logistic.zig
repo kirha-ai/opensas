@@ -26,6 +26,8 @@ pub const Spec = struct {
     input: proc.ProcInput,
     model: design.Spec,
     noprint: bool = false,
+    code: ?@import("code.zig").Options = null,
+    scores: []const @import("logistic_score.zig").Request = &.{},
     exact_only: bool = false,
     exact_request: ?exact.Request = null,
     exact_method: exact.Method = .network,
@@ -345,6 +347,7 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     var classes: std.ArrayList(design.ClassSpec) = .empty;
     var effects: std.ArrayList(usize) = .empty;
     var formats: std.ArrayList(proc.VarSpec) = .empty;
+    var scores: std.ArrayList(@import("logistic_score.zig").Request) = .empty;
     var terms: std.ArrayList([]const usize) = .empty;
     var odds_requests: std.ArrayList(OddsRequest) = .empty;
     var units: std.ArrayList(odds_kernel.Units) = .empty;
@@ -790,6 +793,13 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
                 }
             }
             try odds_requests.append(cx.arena, request);
+        } else if (kw(t, i, "code")) {
+            if (!model_seen) return invalid(cx, t, i);
+            if (s.code != null) return proc.failGap(cx.diags, t[i].line, "PROC LOGISTIC CODE: repeated statements are not implemented", .{});
+            s.code = try @import("code.zig").parse(cx, t[i + 1 .. end]);
+            if (s.code.?.impute or s.code.?.residual) return proc.failGap(cx.diags, t[i].line, "PROC LOGISTIC CODE: IMPUTE and RESIDUAL are not implemented", .{});
+        } else if (kw(t, i, "score")) {
+            try scores.append(cx.arena, try @import("logistic_score.zig").parse(cx, t[i + 1 .. end]));
         } else if (kw(t, i, "format")) {
             var j = i;
             try proc.parseProcFormat(cx.arena, t, &j, &formats);
@@ -807,6 +817,8 @@ pub fn parse(cx: proc.ProcCtx, t: []const lex.Token) diag.Error!Spec {
     s.model.terms = terms.items;
     s.odds_requests = odds_requests.items;
     s.roc_models = roc_models.items;
+    s.scores = scores.items;
+    if (s.scores.len > 0 and formats.items.len > 0) return proc.failGap(cx.diags, 0, "PROC LOGISTIC SCORE: FORMAT propagation across scoring data sets is not implemented", .{});
     s.strata = strata.items;
     s.units = units.items;
     s.units_present = units.items.len > 0 or s.default_units.len > 0;
@@ -1180,6 +1192,10 @@ fn unitTables(a: A, out: *std.ArrayList(u8), s: Spec, result: Analysis) diag.Err
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token) diag.Error!void {
     const spec = try parse(cx, tokens);
     const a = cx.arena;
+    if (spec.code != null or spec.scores.len > 0) {
+        if (spec.exact_only or spec.exact_request != null or spec.strata.len > 0 or spec.nofit or spec.roc_plot or spec.roc_models.len > 0 or spec.roc_contrast != null or spec.by_columns.len > 0 or spec.link != .logit)
+            return proc.failGap(cx.diags, 0, "PROC LOGISTIC CODE/SCORE: exact, conditional, ROC, BY and nonlogit execution paths are not implemented", .{});
+    }
     if (spec.exact_only or spec.exact_request != null) return @import("logistic_exact_proc.zig").run(cx, out, spec);
     if (spec.strata.len > 0) return @import("logistic_conditional_proc.zig").run(cx, out, spec);
     if (spec.nofit or spec.roc_plot or spec.roc_models.len > 0 or spec.roc_contrast != null) return @import("logistic_roc_proc.zig").run(cx, out, spec);
@@ -1234,6 +1250,8 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), tokens: []const lex.Token)
                 try g.queue(group_index * s.odds_requests.len + request_index, "logistic-oddsratio", bytes, .{ .name = .OddsRatioPlot, .label = title, .template = "Stat.Logistic.Graphics.OddsRatioPlot", .path = path });
             };
         }
+        try @import("logistic_code.zig").publish(cx, out, s, result);
+        try @import("logistic_score.zig").publish(cx, s, result);
         if (body.items.len > 0) {
             try out.appendSlice(a, by_text.items);
             try out.appendSlice(a, body.items);
@@ -1267,6 +1285,8 @@ test "LOGISTIC original REF and EFFECT complete oracle listing" {
 }
 
 test {
+    _ = @import("logistic_code.zig");
+    _ = @import("logistic_score.zig");
     _ = @import("logistic_persistence_tests.zig");
     _ = @import("logistic_ordinal.zig");
     _ = @import("logistic_odds.zig");

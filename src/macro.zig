@@ -2148,6 +2148,7 @@ fn upperDup(a: std.mem.Allocator, s: []const u8) Error![]const u8 {
 fn handleInclude(st: *State, src: []const u8, from: usize, out: *std.ArrayList(u8)) Error!usize {
     var k = skipWs(src, from);
     var path: []const u8 = "";
+    const bare = !(k < src.len and (src[k] == '"' or src[k] == '\''));
     if (k < src.len and (src[k] == '"' or src[k] == '\'')) {
         const q = src[k];
         k += 1;
@@ -2164,6 +2165,9 @@ fn handleInclude(st: *State, src: []const u8, from: usize, out: *std.ArrayList(u
     while (k < src.len and src[k] != ';') k += 1;
     if (k < src.len) k += 1; // consume the terminating `;`
 
+    if (bare) {
+        if (st.fileref_fn) |resolve| path = resolve(path) orelse path;
+    }
     if (readFileText(st.a, path)) |text| {
         try process(st, text, out); // splice + expand the included source in place
     } else {
